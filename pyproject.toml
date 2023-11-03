@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=68.2.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "QNodeEditor"
+version = "1.0.0"
+description = "Node editor for PyQt5"
+readme = "README.md"
+authors = [{ name = "Jasper Jeuken" }]
+license = { file = "LICENSE" }
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3",
+]
+keywords = ["node", "editor", "pyqt5", "pyqt", "pyside2", "pyside", "socket", "edge", "graph",
+    "connection", "nodes", "qnode", "qnodeeditor"]
+dependencies = [
+    "PyQt5 ~= 5.15.10",
+    "networkx ~= 3.2.1",
+    "setuptools ~= 68.2.0"
+]
+requires-python = ">=3.9"
+
+[project.urls]
+Github
+Homepage = "https://github.com/JasperJeuken/QNodeEditor"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.package-data]
+QNodeEditor = ["QNodeEditor/themes/fonts/**/*.ttf", "QNodeEditor/themes/img/*.svg"]

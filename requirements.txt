@@ -1,2 +1,3 @@
-PyQt5
-networkx
+PyQt5~=5.15.10
+setuptools~=68.2.0
+networkx~=3.2.1
