@@ -62,6 +62,8 @@ class ValueBox(QWidget):
         """
         super().__init__(parent)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.setAttribute(Qt.WA_TranslucentBackground, True)
+        self.setStyleSheet('background-color: transparent')
         self.setContentsMargins(0, 0, 0, 0)
         self.value_type: int = value_type
 
@@ -144,7 +146,6 @@ class ValueBox(QWidget):
         # Set button sizes
         self.buttons['decrease'].setFixedWidth(15)
         self.buttons['increase'].setFixedWidth(15)
-        # self.buttons['center'].setMinimumWidth(240)
 
         # Set button object names
         self.buttons['center'].setObjectName('centerButton')
@@ -163,6 +164,10 @@ class ValueBox(QWidget):
         for label in [label1, label2]:
             label.setMouseTracking(True)
             label.setFont(self.theme.font())
+
+        # Set style for second page label
+        self.label.setStyleSheet('QLabel { background-color: transparent }')
+        self.label.setAttribute(Qt.WA_TranslucentBackground, True)
 
         # Connect buttons to functions
         self.buttons['decrease'].clicked.connect(self.decrement)
@@ -829,7 +834,7 @@ class ValueBox(QWidget):
                 border: {round(self.theme.widget_border_radius)}px solid 
                 {self.theme.widget_color_pressed_accent.name()};
                 color: {self.theme.widget_color_text_hover.name()};
-                padding: {self.theme.node_padding[0]};
+                padding-left: {self.theme.node_padding[0]};
             }}
         """)
         palette = temp_field.palette()

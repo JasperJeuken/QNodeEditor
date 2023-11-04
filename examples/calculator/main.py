@@ -17,9 +17,10 @@ def handle_error(error: Exception):
 
 
 if __name__ == '__main__':
-
+    import qdarktheme
     # Create an application and a node editor
     app = QApplication([])
+    qdarktheme.setup_theme()
     editor = NodeEditor()
 
     # Add the node definitions to the scene and set the output node
