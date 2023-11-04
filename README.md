@@ -8,13 +8,13 @@
 QNodeEditor is a collection of widgets that enables you to easily create 
 and use a node editing environment in PyQt5.
 
-| <img src="./images/demo.gif" alt="Example node scene being edited" width="100%"/> |
+| <img src="https://raw.githubusercontent.com/JasperJeuken/QNodeEditor/main/images/demo.gif" alt="Example node scene being edited" width="100%"/> |
 |:---------------------------------------------------------------------------------:|
 |             <div width="100%">*Example node scene being edited*</div>             |
 
-|  <img src="./images/themes.jpg" alt="drawing" width="100%"/>   |
-|:--------------------------------------------------------------:|
-| <div width="100%">*QNodeEditor supports flexible themes*</div> |
+|  <img src="https://raw.githubusercontent.com/JasperJeuken/QNodeEditor/main/images/themes.jpg" alt="drawing" width="100%"/>   |
+|:----------------------------------------------------------------------------------------------------------------------------:|
+|                                <div width="100%">*QNodeEditor supports flexible themes*</div>                                |
 
 
 ## Installing
@@ -52,7 +52,7 @@ class AddNode(Node):
         result = values['Value 1'] + values['Value 2']  # Add 'Value 1' and 'Value 2'
         self.set_output_value('Output', result)         # Set as value for 'Output'
 ```
-<img src="./images/addition_node.jpg" alt="Example node" width="300">
+<img src="https://raw.githubusercontent.com/JasperJeuken/QNodeEditor/main/images/addition_node.jpg" alt="Example node" width="300">
 
 This node can now be used in a scene. When it is evaluated, it will take `Value 1` and `Value 2`, add them, and set it as the value of `Output`.
 

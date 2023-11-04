@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "QNodeEditor"
-version = "1.0.0"
+version = "1.0.1"
 description = "Node editor for PyQt5"
 readme = "README.md"
 authors = [{ name = "Jasper Jeuken" }]
@@ -28,7 +28,7 @@ requires-python = ">=3.9"
 [project.urls]
 Homepage = "https://github.com/JasperJeuken/QNodeEditor"
 Github = "https://github.com/JasperJeuken/QNodeEditor"
-Documentation = "https://readthedocs.org/projects/qnodeeditor/"
+Documentation = "https://qnodeeditor.readthedocs.io/en/latest/"
 
 [project.optional-dependencies]
 docs = ["sphinx-toolbox", "pydata-sphinx-theme"]
