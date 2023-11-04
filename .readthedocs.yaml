@@ -15,5 +15,4 @@ python:
     - method: pip
       path: .
       extra_requirements:
-      - pydata-sphinx-theme
-      - sphinx-toolbox
+      - docs
