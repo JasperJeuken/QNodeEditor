@@ -1,6 +1,6 @@
 # QNodeEditor
 
-![pylint]()
+![pylint](https://img.shields.io/badge/pylint-9.84-yellow?logo=python&logoColor=white)
 
 QNodeEditor is a collection of widgets that enables you to easily create 
 and use a node editing environment in PyQt5.
