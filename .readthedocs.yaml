@@ -11,6 +11,9 @@ sphinx:
 
 python:
   install:
-    - path: .
     - requirements: requirements.txt
-    - requirements: pydata-sphinx-theme, sphinx-toolbox
+    - method: pip
+      path: .
+      extra_requirements:
+      - pydata-sphinx-theme
+      - sphinx-toolbox
