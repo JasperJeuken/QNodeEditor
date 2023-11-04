@@ -13,3 +13,4 @@ python:
   install:
     - path: .
     - requirements: requirements.txt
+    - requirements: pydata-sphinx-theme, sphinx-toolbox
