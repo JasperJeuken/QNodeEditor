@@ -31,7 +31,7 @@ Github = "https://github.com/JasperJeuken/QNodeEditor"
 Documentation = "https://qnodeeditor.readthedocs.io/en/latest/"
 
 [project.optional-dependencies]
-docs = ["sphinx-toolbox", "pydata-sphinx-theme"]
+docs = ["sphinx-toolbox", "pydata-sphinx-theme", "sphinx-design"]
 
 [tool.setuptools]
 py-modules = []

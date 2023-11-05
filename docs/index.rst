@@ -1,3 +1,5 @@
+.. module:: test
+
 ===========
 QNodeEditor
 ===========
@@ -40,6 +42,19 @@ Alternatively, you can clone and install the source code from the `Github reposi
 
    pip install -e .
 
+Contents
+========
+
+.. toctree::
+    :maxdepth: 1
+
+    Home <self>
+    getting_started.rst
+    API reference <reference/index.rst>
+
+.. sidebar-links::
+    :github:
+    :pypi: QNodeEditor
 
 Overview
 ========
@@ -52,19 +67,6 @@ to create your own entries with any widget(s) you need.
 
 The evaluation of node scenes happens asynchronously. For longer computations this avoids the interface from freezing.
 Any errors that are throws during evaluation are caught and forwarded, such that they can be handled by you.
-
-Contents
-========
-
-.. toctree::
-    :maxdepth: 2
-
-    self
-    getting_started.rst
-
-.. sidebar-links::
-    :github:
-    :pypi: QNodeEditor
 
 Indices and tables
 ==================
