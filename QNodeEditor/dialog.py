@@ -1,4 +1,10 @@
-"""Dialog containing a node editor and interaction buttons"""
+"""
+Dialog containing a node editor with result handling.
+
+This module contains a class derived from QDialog. The dialog contains a node editing scene and
+handling for results and errors. The dialog is successfully executed when the node scene evaluation
+succeeds. Any errors that occur are caught and displayed to the user.
+"""
 # pylint: disable = no-name-in-module
 from typing import Optional, Any
 import traceback
@@ -14,13 +20,54 @@ from QNodeEditor.util import clear_layout
 
 
 class NodeEditorDialog(QDialog):
-    """Node editor dialog containing a node editor and interaction buttons"""
+    """
+    Dialog containing a node editor and handling buttons
+
+    This dialog houses a node editor and provides an easy way to evaluate scenes. The internal
+    :py:class:`~.editor.NodeEditor` provides all the node editing capabilities, and the dialog
+    handles all errors and calculation results for you. The :py:class:`~.editor.NodeEditor` can be
+    accessed through the :py:attr:`~editor` attribute.
+
+    If the scene is evaluated and no error occurs, the dialog is accepted and closes. If the dialog
+    was opened using ``.exec()``, this will return ``True``. The calculation result is stored
+    in the :py:attr:`~result` attribute, such that it can be accessed.
+
+    If the scene is evaluated and an error does occur, the dialog remains open. An error message
+    appears below the editor with the name of the error. Besides it is a button that opens a
+    popup with the exact error traceback and further details.
+
+    Examples
+    --------
+    Create a new dialog and run it using the ``.exec()`` method. Once the node scene is
+    successfully evaluated, it will return ``True`` (and ``False`` otherwise). If the scene was
+    evaluated, the result of the calculation can be found in the :py:attr:`~result` attribute.
+
+    .. code-block:: python
+
+        dialog = NodeEditorDialog()
+        if dialog.exec():
+            print(dialog.result)
+
+    Attributes
+    ----------
+    editor : :py:class:`~.editor.NodeEditor`
+        Node editor widget that shows an interactive node scene
+    result : dict[str, Any] or None
+        Result of the evaluated scene (``None`` if not evaluated).
+        There is an item in the dictionary for each input of the selected output node. The keys are
+        the names of the entries, and the values the input result that they received.
+    """
 
     def __init__(self, parent: QWidget = None, theme: ThemeType = DarkTheme):
         """
-        Create a node editor and set the layout of the dialog
-        :param parent: parent widget
-        :param theme: node editor dialog theme
+        Create a new node editor dialog.
+
+        Parameters
+        ----------
+        parent : QWidget, optional
+            Parent widget for this dialog (if any)
+        theme : Type[:py:class:`~QNodeEditor.themes.theme.Theme`], optional
+            Theme for the node editor (default: :py:class:`~QNodeEditor.themes.dark.DarkTheme`)
         """
         super().__init__(parent, Qt.WindowCloseButtonHint)
         self.setWindowTitle('Node editor')
@@ -39,16 +86,16 @@ class NodeEditorDialog(QDialog):
         layout.addWidget(self.editor, 1)
 
         # Create status display
-        self.status_layout = QHBoxLayout()
-        self.status_layout.setContentsMargins(0, 0, 0, 0)
-        self.status_layout.addWidget(QLabel(''))
+        self._status_layout = QHBoxLayout()
+        self._status_layout.setContentsMargins(0, 0, 0, 0)
+        self._status_layout.addWidget(QLabel(''))
 
         # Create dialog buttons
         button_layout = QHBoxLayout()
         button_cancel = QPushButton('Cancel')
         button_calculate = QPushButton('Calculate')
         button_cancel.clicked.connect(self.reject)
-        button_calculate.clicked.connect(self.calculate)
+        button_calculate.clicked.connect(self._calculate)
         button_calculate.setDefault(True)
         button_layout.addWidget(button_cancel)
         button_layout.addWidget(button_calculate)
@@ -56,33 +103,48 @@ class NodeEditorDialog(QDialog):
         # Create horizontal layout below the node editor
         bottom_layout = QHBoxLayout()
         bottom_layout.setContentsMargins(11, 0, 11, 8)
-        bottom_layout.addLayout(self.status_layout, 1)
+        bottom_layout.addLayout(self._status_layout, 1)
         bottom_layout.addLayout(button_layout)
         layout.addLayout(bottom_layout)
 
         # Set dialog theme
         self.theme: ThemeType = theme
 
-    def calculate(self) -> None:
+    def _calculate(self) -> None:
         """
-        Evaluate the node editor scene and return as the dialog result (if no error occurred)
-        :return: None
+        Start the evaluation of the node editor scene.
+
+        The result or any errors are handled by :py:meth:`_handle_result` and
+        :py:meth:`_handle_error`.
+
+        Returns
+        -------
+            None
         """
         # Disable the node editor
         self.editor.view.setDisabled(True)
 
         # Show a label in the status layout
         self._clear_status()
-        self.status_layout.addWidget(QLabel('Evaluating node scene...'))
+        self._status_layout.addWidget(QLabel('Evaluating node scene...'))
 
         # Start evaluation
         self.editor.scene.evaluate()
 
     def _handle_result(self, result: dict[str, Any]) -> None:
         """
-        If the evaluation was successful, store the result and close the dialog
-        :param result: evaluation result
-        :return: None
+        Handle the result of a successful node scene evaluation.
+
+        Stores the result in the class attribute :py:attr:`result` and accepts the dialog.
+
+        Parameters
+        ----------
+        result : dict[str, Any]
+            Result of the node scene evaluation. (Name, value) pairs for all output node entries.
+
+        Returns
+        -------
+            None
         """
         # Store the evaluation result in the dialog for later access
         self.result = result
@@ -95,20 +157,29 @@ class NodeEditorDialog(QDialog):
 
     def _handle_error(self, error: Exception) -> None:
         """
-        If the evaluation resulted in an error, show the error and a details button
-        :param error: error that occurred during evaluation
-        :return: None
+        Handle any errors that occur during node scene evaluation.
+
+        Displays the error name and adds a button that opens a popup with the error trace.
+
+        Parameters
+        ----------
+        error : Exception
+            The error that occurred during scene evaluation
+
+        Returns
+        -------
+            None
         """
         # Add an 'Error' title to the status
         self._clear_status()
         error_title = QLabel('Error:')
         error_title.setStyleSheet('QLabel { color: red; }')
-        self.status_layout.addWidget(error_title)
+        self._status_layout.addWidget(error_title)
 
         # Add the short error title to the status
         font_metrics = QFontMetrics(self.font())
         elided_error = font_metrics.elidedText(str(error), Qt.ElideRight, int(0.5 * self.width()))
-        self.status_layout.addWidget(QLabel(elided_error))
+        self._status_layout.addWidget(QLabel(elided_error))
 
         # Create a dialog containing the error details
         details_dialog = QMessageBox(self)
@@ -122,41 +193,50 @@ class NodeEditorDialog(QDialog):
         # Add a button that shows the error details
         details_button = QPushButton('Details')
         details_button.clicked.connect(details_dialog.exec)
-        self.status_layout.addWidget(details_button)
+        self._status_layout.addWidget(details_button)
 
-        self.status_layout.addStretch()
+        self._status_layout.addStretch()
         self.editor.view.setDisabled(False)
 
     def _clear_status(self) -> None:
         """
-        Clear the status layout
-        :return: None
+        Clear the status message layout.
+
+        Returns
+        -------
+            None
         """
-        clear_layout(self.status_layout)
+        clear_layout(self._status_layout)
 
     @property
     def theme(self) -> ThemeType:
         """
-        Get the current node editor dialog theme
-        :return: ThemeType: current theme
+        Get or set the theme of the node editor dialog.
+
+        Setting the dialog theme automatically affects all child elements including the node
+        editor itself.
         """
         return self._theme
 
     @theme.setter
     def theme(self, new_theme: ThemeType) -> None:
-        """
-        Set a new theme for the node editor dialog
-        :param new_theme: new theme
-        :return: None
-        """
         self._theme = new_theme
         self.editor.view.theme = new_theme
 
     def keyPressEvent(self, event: QKeyEvent) -> None:
         """
-        Prevent pressing return/enter from closing dialog
-        :param event: key press event
-        :return: None
+        Prevent dialog from closing if return or enter is pressed
+
+        Parameters
+        ----------
+        event : QKeyEvent
+            Key press event
+
+        Returns
+        -------
+            None
+
+        :meta private:
         """
         if event.key() == Qt.Key_Enter or event.key() == Qt.Key_Return:
             return event.accept()

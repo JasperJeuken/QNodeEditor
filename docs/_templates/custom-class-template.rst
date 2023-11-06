@@ -7,24 +7,9 @@
    :members:
    :no-inherited-members:
 
-   {% block methods %}
-   .. automethod:: __init__
-
-   {% if methods %}
-   .. rubric:: {{ _('Methods') }}
-
-   .. autosummary::
-   {% for item in methods %}
-   {%- if item not in inherited_members %}
-      ~{{ name }}.{{ item }}
-   {%- endif %}
-   {%- endfor %}
-   {% endif %}
-   {% endblock %}
-
-   {% block attributes %}
+   {% block properties %}
    {% if attributes %}
-   .. rubric:: {{ _('Attributes') }}
+   .. rubric:: {{ _('Properties') }}
 
    .. autosummary::
    {% for item in attributes %}
@@ -33,4 +18,21 @@
    {%- endif %}
    {%- endfor %}
    {% endif %}
+   {% endblock %}
+
+   {% block methods %}
+   {% if methods %}
+   .. rubric:: {{ _('Methods') }}
+
+   .. autosummary::
+      :nosignatures:
+   {% for item in methods %}
+   {%- if item not in inherited_members and item not in attributes %}
+      ~{{ name }}.{{ item }}
+   {%- endif %}
+   {%- endfor %}
+   {% endif %}
+
+   .. automethod:: __init__
+
    {% endblock %}

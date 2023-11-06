@@ -51,7 +51,7 @@ html_sidebars = {
     ]
 }
 html_theme_options = {
-  "show_prev_next": False
+    "show_prev_next": False
 }
 html_last_updated_fmt = '%b %d, %Y'
 html_show_sphinx = False
