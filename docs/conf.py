@@ -32,6 +32,10 @@ autosummary_generate = True
 autodoc_default_options = {
     'inherited-members': False
 }
+autodoc_member_order = 'groupwise'
+autodoc_type_aliases = {
+    'ThemeType': 'QNodeEditor.themes.ThemeType'
+}
 
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']

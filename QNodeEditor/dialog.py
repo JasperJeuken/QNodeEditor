@@ -67,7 +67,7 @@ class NodeEditorDialog(QDialog):
         parent : QWidget, optional
             Parent widget for this dialog (if any)
         theme : Type[:py:class:`~QNodeEditor.themes.theme.Theme`], optional
-            Theme for the node editor (default: :py:class:`~QNodeEditor.themes.dark.DarkTheme`)
+            Theme for the dialog (default: :py:class:`~QNodeEditor.themes.dark.DarkTheme`)
         """
         super().__init__(parent, Qt.WindowCloseButtonHint)
         self.setWindowTitle('Node editor')

@@ -1,4 +1,9 @@
-"""Widget containing a node scene and view"""
+"""
+Widget containing a node scene and view.
+
+This module contains a class derived from QWidget. The widget contains an interactive node scene
+which can be edited at runtime by the user.
+"""
 # pylint: disable = no-name-in-module
 import os
 from typing import Type, TYPE_CHECKING, overload
@@ -18,16 +23,36 @@ os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
 
 
 class NodeEditor(QWidget):
-    """Node editor widget containing a node scene and view"""
+    """
+    Node editor widget containing a node scene and view
 
-    evaluated: pyqtSignal = pyqtSignal(dict)     # emits result once evaluation is complete
-    errored: pyqtSignal = pyqtSignal(Exception)  # emits error if evaluation resulted in error
+    Widget that contains a :py:class:`~QNodeEditor.scene.NodeScene` and a
+    :py:class:`~QNodeEditor.graphics.view.NodeView` of that scene. To change the node editor, access
+    the :py:attr:`scene` attribute to modify the node scene.
+
+    Attributes
+    ----------
+    scene : :py:class:`~QNodeEditor.scene.NodeScene`
+        Node scene
+    view : :py:class:`~QNodeEditor.graphics.view.NodeView`
+        View of the node scene
+    """
+
+    evaluated: pyqtSignal = pyqtSignal(dict)
+    """pyqtSignal -> dict: Signal that emits the evaluation result if successful"""
+    errored: pyqtSignal = pyqtSignal(Exception)
+    """pyqtSignal -> Exception: Signal that emits the error if evaluation failed"""
 
     def __init__(self, parent: QWidget = None, theme: ThemeType = DarkTheme):
         """
-        Create a node scene and view and set the initial state (if specified)
-        :param parent: parent widget
-        :param theme: theme to use for the node editor
+        Create a new node editor widget.
+
+        Parameters
+        ----------
+        parent : QWidget, optional
+            Parent widget for this node editor (if any)
+        theme : Type[:py:class:`~QNodeEditor.themes.theme.Theme`], optional
+            Theme for the node editor (default: :py:class:`~QNodeEditor.themes.dark.DarkTheme`)
         """
         super().__init__(parent)
 
@@ -51,94 +76,93 @@ class NodeEditor(QWidget):
     @property
     def theme(self) -> ThemeType:
         """
-        Get the current node editor theme
-        :return: ThemeType: current theme
+        Get or set the theme of the node editor.
+
+        Setting the theme of the node editor widget affects all child elements.
         """
         return self._theme
 
     @theme.setter
     def theme(self, new_theme: ThemeType) -> None:
-        """
-        Set a new theme for the node editor
-        :param new_theme: new theme
-        :return: None
-        """
         self._theme = new_theme
         self.view.theme = new_theme
 
     @property
     def available_nodes(self) -> dict[str, Type['Node'] or dict]:
         """
-        Get the (nested) dictionary defining the names and classes of available nodes in the scene
-        :return: dict[str, Type[Node] or dict]: (nested) dictionary of (name, Node class) items
+        Get or set the available nodes in the scene.
+
+        This is a (nested) dictionary with pairs of (name, Type[:py:class:`~.node.Node`]). These
+        names are displayed in the context menu in the node editor when adding new nodes. The added
+        node is then of the type provided in the pair with it. Use a nested dictionary to create
+        sub-menus in the context menu.
+
+        See Also
+        --------
+        :py:attr:`~.scene.NodeScene.available_nodes` : more detailed explanation
         """
         return self.scene.available_nodes
 
     @available_nodes.setter
     def available_nodes(self, new_available_nodes: dict[str, Type['Node'] or dict]) -> None:
-        """
-        Set the available nodes in the scene using a (nested) dictionary of (name, Node class) items
-        :param new_available_nodes: (nested) dictionary of (name, Node class) items
-        :return: None
-        """
         self.scene.available_nodes = new_available_nodes
 
     @property
     def output_node(self) -> Type['Node']:
         """
-        Get the type of node that is considered the scene output node
-        :return: Type[Node]: type of node that is used for output
+        Get or set the node that should be used as the output node.
+
+        This node will not be evaluated, but is used to create the evaluation result. The preceding
+        nodes are evaluated, and the resulting value(s) wired to the output node are recorded and
+        emitted through the :py:attr:`evaluated` signal.
         """
         return self.scene.output_node
 
     @output_node.setter
     @overload
     def output_node(self, code: int) -> None:
-        """
-        Set the node to use as output by its unique code
-        :param code: unique code for node to use as output node
-        :return: None
-        """
+        pass
 
     @output_node.setter
     @overload
     def output_node(self, node_class: Type['Node']) -> None:
-        """
-        Set the node to use as output by its class definition
-        :param node_class: class definition of node to use as output node
-        :return: None
-        """
+        pass
 
     @output_node.setter
     @overload
     def output_node(self, node: 'Node') -> None:
-        """
-        Set the node to use as output by an instance of the node
-        :param node: node instance for which class to use as output node
-        :return: None
-        """
+        pass
 
     @output_node.setter
     def output_node(self, node: 'Node' or Type['Node'] or int or None) -> None:
-        """
-        Set the type of node to use as the output node
-        :param node: code, class definition, or node instance from which to derive output node
-        :return: None
-        """
         self.scene.output_node = node
 
     def save(self, filepath: str) -> None:
         """
-        Save the scene state to a file
-        :param filepath: path of file to save state to
-        :return: None
+        Save the node scene state to a file.
+
+        Parameters
+        ----------
+        filepath : str
+            Path to file to save node scene state in
+
+        Returns
+        -------
+            None
         """
         self.scene.save(filepath)
 
     def load(self, filepath: str) -> None:
         """
-        Load a scene state from a file
-        :param filepath: path of file to load state from
-        :return: None
+        Load a node scene state from a file
+
+        Parameters
+        ----------
+        filepath : str
+            Path to file to load node scene state from
+
+        Returns
+        -------
+            None
         """
         self.scene.load(filepath)
