@@ -1,4 +1,9 @@
-"""Node container storing a node and its elements"""
+"""
+Node containing entries with widgets and sockets
+
+This module contains a class derived from QObject. The object contains a list of entries that make
+up the structure of the node and determine its look.
+"""
 # pylint: disable = no-name-in-module
 from abc import abstractmethod
 from typing import TYPE_CHECKING, Optional, Iterable, overload, Any, Type
@@ -16,14 +21,71 @@ if TYPE_CHECKING:
 
 
 class Node(QObject, metaclass=ObjectMeta):
-    """Node container holding inputs, outputs, layout, connections, etc..."""
+    """
+    Node container holding inputs, outputs, widgets, and various utility methods.
+
+    This class is abstract and cannot be used by itself. To define nodes for the node editor,
+    inherit from this class and implement (some of) the following functions:
+
+    - :py:meth:`create`: To add entries to the node and set properties such as its title
+    - :py:meth:`evaluate`: To use the inputs and static widgets of the node to determine its outputs
+    - :py:meth:`save`: To save any variables that are needed to restore the node state
+    - :py:meth:`load`: To use any saved variables to restore the node to its desired state
+
+    Examples
+    --------
+    To define a node that takes two number inputs and uses their sum as the output:
+
+    .. code-block:: python
+
+        class MyNode(Node):
+            code = 1  # Unique to MyNode
+
+            def create(self):
+                self.title = 'Add'  # Set the title of the node
+
+                self.add_label_output('Output')  # Add a labeled output 'Output'
+                self.add_value_input('Value 1')  # Add a number input 'Value 1'
+                self.add_value_input('Value 2')  # Add another input 'Value 2'
+
+            def evaluate(self, values):
+                result = values['Value 1'] + values['Value 2']  # Calculate sum of Value 1 and 2
+                self.set_output_value('Output', result)         # Set 'Output' value
+
+    Here, the :py:meth:`create` method is called when the node is created. The :py:meth:`evaluate`
+    function is called when the node scene is evaluated (and the node is somehow connected to the
+    output). It receives as its argument ``values``. This is a dictionary of the values for each
+    entry in the node. In this case, ``values`` would look like this:
+
+    .. code-block:: python
+
+            values = {
+                'Output': None,
+                'Value 1': 10.0,  # some number
+                'Value 2': 5.0    # another number
+            }
+
+    For ``MyNode``, we do not need to implement the :py:meth:`save` or :py:meth:`load` function,
+    since the value inputs are automatically saved. In case you implement custom entries, you can
+    use these functions to store variables. The :py:meth:`save` function should return a dictionary
+    and can contain any data you want to save (as long as it is JSON-parsable). Whatever you choose
+    to save will be provided back in the :py:meth:`load` function, so you can restore the state of
+    your node.
+    """
 
     code: int
+    """int: Unique code that only one derived Node class can use"""
 
     def __init__(self, title: str = 'Node'):
         """
-        Create a new node with a title and associate it to a scene (if specified)
-        :param title: title of the node
+        Create a new node.
+
+        Defines an empty node and a graphics object to represent it in the scene.
+
+        Parameters
+        ----------
+        title : str, default='Node'
+            Title of the node (can be accessed through :py:attr:`title`)
         """
         super().__init__()
         # Set node properties
@@ -41,18 +103,12 @@ class Node(QObject, metaclass=ObjectMeta):
     @property
     def title(self) -> str:
         """
-        Get the current title of the node
-        :return: str
+        Get or set the title of the node
         """
         return self._title
 
     @title.setter
     def title(self, new_title: str) -> None:
-        """
-        Set a new title for the node
-        :param new_title: new title
-        :return: None
-        """
         self._title = new_title
         if hasattr(self, 'graphics'):
             self.graphics.set_title(new_title)
@@ -60,33 +116,39 @@ class Node(QObject, metaclass=ObjectMeta):
     @abstractmethod
     def create(self) -> None:
         """
-        Override to create and add the elements of the node
-        :return: None
+        Override this method to add elements to the node and set its properties.
+
+        Returns
+        -------
+            None
         """
 
     def evaluate(self, entry_values: dict[str, Any]) -> None:
         """
-        Override to read input values and set output values
-        :param entry_values: dictionary with (name, value) pairs for each input entry
-        :return: None
+        Override this method to use the inputs of the node to determine the outputs of the node.
+
+        Use the :py:meth:`set_output_value` method to set output values of the node.
+
+        Parameters
+        ----------
+        entry_values : dict[str, Any]
+            Dictionary with (name, value) pairs for each entry in this node.
+
+        Returns
+        -------
+            None
         """
         raise NotImplementedError(f"The 'evaluate' function was not implemented for '{self}'")
 
     @property
     def scene(self) -> Optional['NodeScene']:
         """
-        Get the scene this node is part of
-        :return: NodeScene: scene node is part of
+        Get or set the scene this node is part of
         """
         return self._scene
 
     @scene.setter
     def scene(self, new_scene: Optional['NodeScene']) -> None:
-        """
-        Change the scene this node is part of
-        :param new_scene: new scene to add node to
-        :return: None
-        """
         self.disconnect_signals()
         self._scene = new_scene
         self.connect_signals()
@@ -94,8 +156,9 @@ class Node(QObject, metaclass=ObjectMeta):
     @property
     def output(self) -> dict[str, Any]:
         """
-        Evaluate this node or use a cached output
-        :return: dict[str, Any]: dictionary with (name, value) pairs for all output entries
+        Get or set the cached output for this node. (private)
+
+        :meta private:
         """
         # If there is no cached output, evaluate the node
         if self._output is None:
@@ -106,11 +169,6 @@ class Node(QObject, metaclass=ObjectMeta):
 
     @output.setter
     def output(self, new_output: Optional[dict[str, Any]]) -> None:
-        """
-        Set the cached output
-        :param new_output: dictionary of (name, value) pairs for output entries
-        :return: None
-        """
         # If argument is None, reset cached output
         if new_output is None:
             self._output = None
@@ -121,8 +179,23 @@ class Node(QObject, metaclass=ObjectMeta):
 
     def _run_evaluate(self) -> None:
         """
-        Gather all node inputs and run the evaluate function to obtain the node outputs
-        :return: None
+        Evaluate this node with the current settings.
+
+        This function contains three steps:
+        1. Gather the values of the inputs (either through connected wires or the entry widget)
+        2. Run the :py:meth:`evaluate` method (providing the inputs)
+        3. Make sure that all node outputs have been set
+
+        If these steps are completed successfully, the results are stored in the output cache. In
+        this way, even if the node outputs are connected to multiple other nodes, the evaluation
+        only has to run once.
+
+        In the first step, if an input entry is connected to another node, that node is evaluated to
+        obtain the calculation result.
+
+        Returns
+        -------
+            None
         """
         # Get the entry values for the evaluate function
         values = {}
@@ -145,8 +218,11 @@ class Node(QObject, metaclass=ObjectMeta):
 
     def _reset_outputs(self) -> None:
         """
-        Reset the value of all output entries
-        :return: None
+        Set the value of all output entries to :py:class:`~.util.NoValue`.
+
+        Returns
+        -------
+            None
         """
         for entry in self.entries:
             if entry.entry_type == Entry.TYPE_OUTPUT:
@@ -154,10 +230,21 @@ class Node(QObject, metaclass=ObjectMeta):
 
     def set_output_value(self, entry: str or Entry, value: Any) -> None:
         """
-        Set the value of an output entry
-        :param entry: (name of) output entry
-        :param value: value of output
-        :return: None
+        Set the value of an output entry.
+
+        Use this function in the :py:meth:`evaluate` method in derived classes. The outputs can then
+        be used by any nodes connected to them.
+
+        Parameters
+        ----------
+        entry : str or :py:class:`!.entry.Entry`
+            The (name of the) output entry to set the output value for
+        value : Any
+            The value to give the output
+
+        Returns
+        -------
+            None
         """
         # If string is provided, find entry by name
         if isinstance(entry, str):
@@ -175,7 +262,10 @@ class Node(QObject, metaclass=ObjectMeta):
     def connect_signals(self) -> None:
         """
         Connect signals from all entries to the scene
-        :return: None
+
+        Returns
+        -------
+            None
         """
         for entry in self.entries:
             entry.connect_signal()
@@ -183,15 +273,24 @@ class Node(QObject, metaclass=ObjectMeta):
     def disconnect_signals(self) -> None:
         """
         Disconnect signals from all entries from the scene
-        :return: None
+
+        Returns
+        -------
+            None
         """
         for entry in self.entries:
             entry.disconnect_signal()
 
     def remove(self) -> None:
         """
-        Remove this node
-        :return: None
+        Remove this node from the scene.
+
+        The node will be removed from the scene. Any edges connected to the node are removed as
+        well.
+
+        Returns
+        -------
+            None
         """
         # Disconnect all edges from the node
         for socket in self.sockets():
@@ -205,9 +304,25 @@ class Node(QObject, metaclass=ObjectMeta):
 
     def add_entry(self, entry: Entry) -> None:
         """
-        Add an entry to the node
-        :param entry: entry to add
-        :return: None
+        Add an entry to this node.
+
+        Append a new entry to the node content. The entry will be placed as the last entry (bottom)
+        of the node.
+
+        See Also
+        --------
+        :py:meth:`add_entries`: Add multiple entries
+        :py:meth:`insert_entry`: Add an entry at a specific index
+        :py:meth:`insert_entries`: Add multiple entries at a specific index
+
+        Parameters
+        ----------
+        entry : :py:class:`~.entry.Entry`
+            Entry to add to the node
+
+        Returns
+        -------
+            None
         """
         if entry.name in self.entry_names():
             raise ValueError(f'An entry with the name "{entry.name}" already exists')
@@ -217,19 +332,52 @@ class Node(QObject, metaclass=ObjectMeta):
 
     def add_entries(self, entries: Iterable[Entry]) -> None:
         """
-        Add multiple entries to the node
-        :param entries: iterable of entries to add
-        :return: None
+        Add multiple entries to this node.
+
+        Append multiple new entries to the node content. The entries will be placed at the end
+        (bottom) of the node.
+
+        See Also
+        --------
+        :py:meth:`add_entry`: Add a single entry
+        :py:meth:`insert_entry`: Add an entry at a specific index
+        :py:meth:`insert_entries`: Add multiple entries at a specific index
+
+        Parameters
+        ----------
+        entries : Iterable[:py:class:`~.entry.Entry`]
+            Iterable of entries to add to the node
+
+        Returns
+        -------
+            None
         """
         for entry in entries:
             self.add_entry(entry)
 
     def insert_entry(self, entry: Entry, index: int) -> None:
         """
-        Insert an entry into the node at a specific index
-        :param entry: entry to add
-        :param index: index to insert at
-        :return: None
+        Insert an entry into this node at a specific index.
+
+        Inserts a new entry into the node content. The position of the entry is determined by the
+        index (``0`` being the first (top) element).
+
+        See Also
+        --------
+        :py:meth:`add_entry`: Add a single entry at the end
+        :py:meth:`add_entries`: Add multiple entries at the end
+        :py:meth:`insert_entries`: Add multiple entries at a specific index
+
+        Parameters
+        ----------
+        entry : :py:class:`~.entry.Entry`
+            Entry to add to the node
+        index : int
+            Index at which to insert the entry
+
+        Returns
+        -------
+            None
         """
         if entry.name in self.entry_names():
             raise ValueError(f'An entry with the name "{entry.name}" already exists')
@@ -239,19 +387,51 @@ class Node(QObject, metaclass=ObjectMeta):
 
     def insert_entries(self, entries: Iterable[Entry], index: int) -> None:
         """
-        Insert multiple entries into the node at a specified index
-        :param entries: iterable of entries to add
-        :param index: index to insert at
-        :return: None
+        Insert multiple entries into this node at a specific index.
+
+        Inserts new entries into the node content. The position of the entries is determined by the
+        index (``0`` being the top-most entry).
+
+        See Also
+        --------
+        :py:meth:`add_entry`: Add a single entry at the end
+        :py:meth:`add_entries`: Add multiple entries at the end
+        :py:meth:`insert_entry`: Add a single entry at a specific index
+
+        Parameters
+        ----------
+        entries : Iterable[:py:class:`~.entry.Entry`]
+            Iterable of entries to add to the node
+        index : int
+            Index at which to insert the entries
+
+        Returns
+        -------
+            None
         """
         for i, entry in enumerate(entries):
             self.insert_entry(entry, index + i)
 
     def index(self, entry: str or Entry) -> int:
         """
-        Get the index of the entry in the node (0=top-most, ...)
-        :param entry: (name of) entry to find index of
-        :return: int: index of the entry
+        Get the index of the specified entry.
+
+        Finds the entry (optionally by name) and returns its index (``0`` being the top-most entry).
+
+        Parameters
+        ----------
+        entry : str or :py:class:`~.entry.Entry`
+            The (name of the) entry to get the index of
+
+        Returns
+        -------
+        int
+            Index of the specified entry
+
+        Raises
+        ------
+        KeyError
+            If the entry could not be found in the node
         """
         if isinstance(entry, str):
             entry = self.get_entry(entry)
@@ -259,25 +439,32 @@ class Node(QObject, metaclass=ObjectMeta):
 
     @overload
     def remove_entry(self, name: str) -> None:
-        """
-        Remove an entry from the node by name
-        :param name: name of the entry to remove
-        :return: None
-        """
+        pass
 
     @overload
     def remove_entry(self, entry: Entry) -> None:
-        """
-        Remove an entry from the node
-        :param entry: entry to remove
-        :return: None
-        """
+        pass
 
     def remove_entry(self, entry) -> None:
         """
-        Implementation of remove entry function
-        :param entry: entry to remove (or its name)
-        :return: None
+        Remove an entry from the node.
+
+        Finds and removes the specified entry from the node. The node is automatically resized to
+        fit the remaining content.
+
+        Parameters
+        ----------
+        entry : str or :py:class:`~.entry.Entry`
+            The (name of the) entry to remove.
+
+        Returns
+        -------
+            None
+
+        Raises
+        ------
+        TypeError
+            If the ``entry`` argument is not a string or :py:class:`~.entry.Entry`
         """
         # If argument is not an Entry object or string, raise error
         if not isinstance(entry, (str, Entry)):
@@ -292,8 +479,14 @@ class Node(QObject, metaclass=ObjectMeta):
 
     def remove_all_entries(self) -> None:
         """
-        Remove all entries from the node
-        :return: None
+        Remove all entries from the node.
+
+        This methods clears all of the content from the node. Since all entries are removed, any
+        edges connected to inputs/outputs are also removed.
+
+        Returns
+        -------
+            None
         """
         while len(self.entries) > 0:
             entry = self.entries.pop(0)
@@ -301,24 +494,47 @@ class Node(QObject, metaclass=ObjectMeta):
 
     def update_entries(self) -> None:
         """
-        Update the position and width of all entries in the node
-        :return: None
+        Update the geometry of all entries in the node.
+
+        Returns
+        -------
+            None
+
+        :meta private:
         """
         for entry in self.entries:
             entry.update_geometry()
 
     def entry_names(self) -> list[str]:
         """
-        Get a list of names for all entries
-        :return: list[str]: list of names
+        Get the names of all entries in the node.
+
+        The result of this function is a list of names. Entry names within a node are unique.
+
+        Returns
+        -------
+            None
         """
         return [entry.name for entry in self.entries]
 
     def get_entry(self, name: str) -> Entry:
         """
-        Get an entry by name
-        :param name: name of entry
-        :return: None
+        Get an entry object by its name.
+
+        Parameters
+        ----------
+        name : str
+            Name of the entry to retrieve.
+
+        Returns
+        -------
+        :py:class:`~.entry.Entry`
+            The entry with the specified name.
+
+        Raises
+        ------
+        KeyError
+            If no entry with the specified name exists.
         """
         for entry in self.entries:
             if entry.name == name:
@@ -330,14 +546,30 @@ class Node(QObject, metaclass=ObjectMeta):
                         maximum: int or float = 100,
                         value_type: Type[int] or Type[float] = float) -> None:
         """
-        Add a new value box entry to the node
-        :param name: name of the entry
-        :param entry_type: type of entry (Entry.TYPE_INPUT, Entry.TYPE_STATIC, or Entry.TYPE_OUTPUT)
-        :param value: initial value of the value box
-        :param minimum: minimum value of the value box
-        :param maximum: maximum value of the value box
-        :param value_type: type of value (int or float)
-        :return: None
+        Add a new value box entry to the node.
+
+        Adds a new entry to the node containing a :py:class:`~.widgets.value_box.ValueBox` widget.
+
+        By default, the entry is static (no inputs/outputs).
+
+        Parameters
+        ----------
+        name : str
+            Name of this entry
+        entry_type : int
+            Type of entry (:py:attr:`TYPE_STATIC`, :py:attr:`TYPE_INPUT`, or :py:attr:`TYPE_OUTPUT`)
+        value : int or float
+            Initial value of the :py:class:`~.widgets.value_box.ValueBox`
+        minimum : int or float
+            Minimum value of the :py:class:`~.widgets.value_box.ValueBox`
+        maximum : int or float
+            Maximum value of the :py:class:`~.widgets.value_box.ValueBox`
+        value_type : Type[int] or Type[float]
+            Type of :py:class:`~.widgets.value_box.ValueBox` (``float`` or ``int``)
+
+        Returns
+        -------
+            None
         """
         entry = ValueBoxEntry(name, entry_type, value, minimum, maximum, value_type,
                               theme=self.graphics.theme)
@@ -347,13 +579,27 @@ class Node(QObject, metaclass=ObjectMeta):
                         minimum: int or float = -100, maximum: int or float = 100,
                         value_type: Type[int] or Type[float] = float) -> None:
         """
-        Add a new value box input to the node
-        :param name: name of the input
-        :param value: initial value of the value box
-        :param minimum: minimum value of the value box
-        :param maximum: maximum value of the value box
-        :param value_type: type of value (int or float)
-        :return: None
+        Add a new value box input to the node.
+
+        Adds a new entry to the node containing a :py:class:`~.widgets.value_box.ValueBox` widget.
+        The entry has an input socket.
+
+        Parameters
+        ----------
+        name : str
+            Name of this entry
+        value : int or float
+            Initial value of the :py:class:`~.widgets.value_box.ValueBox`
+        minimum : int or float
+            Minimum value of the :py:class:`~.widgets.value_box.ValueBox`
+        maximum : int or float
+            Maximum value of the :py:class:`~.widgets.value_box.ValueBox`
+        value_type : Type[int] or Type[float]
+            Type of :py:class:`~.widgets.value_box.ValueBox` (``float`` or ``int``)
+
+        Returns
+        -------
+            None
         """
         self.add_value_entry(name, Entry.TYPE_INPUT, value, minimum, maximum, value_type)
 
@@ -361,57 +607,131 @@ class Node(QObject, metaclass=ObjectMeta):
                          minimum: int or float = -100, maximum: int or float = 100,
                          value_type: Type[int] or Type[float] = float) -> None:
         """
-        Add a new value box output to the node
-        :param name: name of the output
-        :param value: initial value of the value box
-        :param minimum: minimum value of the value box
-        :param maximum: maximum value of the value box
-        :param value_type: type of value (int or float)
-        :return: None
+        Add a new value box output to the node.
+
+        Adds a new entry to the node containing a :py:class:`~.widgets.value_box.ValueBox` widget.
+        The entry has an output socket.
+
+        Parameters
+        ----------
+        name : str
+            Name of this entry
+        value : int or float
+            Initial value of the :py:class:`~.widgets.value_box.ValueBox`
+        minimum : int or float
+            Minimum value of the :py:class:`~.widgets.value_box.ValueBox`
+        maximum : int or float
+            Maximum value of the :py:class:`~.widgets.value_box.ValueBox`
+        value_type : Type[int] or Type[float]
+            Type of :py:class:`~.widgets.value_box.ValueBox` (``float`` or ``int``)
+
+        Returns
+        -------
+            None
         """
         self.add_value_entry(name, Entry.TYPE_OUTPUT, value, minimum, maximum, value_type)
 
     def add_label_entry(self, name: str, entry_type: int = Entry.TYPE_STATIC) -> None:
         """
-        Add a new label entry to the node
-        :param name: name of the entry
-        :param entry_type: type of entry (Entry.TYPE_INPUT, Entry.TYPE_STATIC, or Entry.TYPE_OUTPUT)
-        :return: None
+        Add a new labeled entry to the node.
+
+        Adds a new entry to the node containing only a label with the entry name.
+
+        Parameters
+        ----------
+        name : str
+            Name of this entry
+        entry_type : int
+            Type of entry (:py:attr:`TYPE_STATIC`, :py:attr:`TYPE_INPUT`, or :py:attr:`TYPE_OUTPUT`)
+
+        Returns
+        -------
+            None
         """
         entry = LabeledEntry(name, entry_type, self.graphics.theme)
         self.add_entry(entry)
 
     def add_label_input(self, name: str) -> None:
         """
-        Add a new label input to the node
-        :param name: name of the input
-        :return: None
+        Add a new labeled input to the node.
+
+        Adds a new entry to the node containing only a label with the entry name. The entry has an
+        input socket.
+
+        Parameters
+        ----------
+        name : str
+            Name of this entry
+
+        Returns
+        -------
+            None
         """
         self.add_label_entry(name, Entry.TYPE_INPUT)
 
     def add_label_output(self, name: str) -> None:
         """
-        Add a new label output to the node
-        :param name: name of the output
-        :return: None
+        Add a new labeled output to the node.
+
+        Adds a new entry to the node containing only a label with the entry name. The entry has an
+        output socket.
+
+        Parameters
+        ----------
+        name : str
+            Name of this entry
+
+        Returns
+        -------
+            None
         """
         self.add_label_entry(name, Entry.TYPE_OUTPUT)
 
     def add_combo_box_entry(self, name: str, items: Iterable[str] or dict[str, Any] = None) -> None:
         """
-        Add a new combo box entry to the node
-        :param name: name of the entry
-        :param items: items to add to the combo box (either only texts or (text, data) pairs)
-        :return: None
+        Add a new combo box entry to the node.
+
+        Adds a new entry to the node containing a combo box widget. This entry can only be static.
+
+        Parameters
+        ----------
+        name : str
+            Name of this entry
+        items : Iterable[str] or dict[str, Any]
+            Possible values of the combo box.
+
+            Can be a list of strings used as the ``name`` of each option.
+
+            Can be a dictionary of (``name``, ``data``) pairs.
+
+            If a dictionary is used, the ``values`` argument for the :py:meth:`evaluate` method will
+            contain the ``data`` for the selected option. Otherwise, it will contain the ``name``.
+
+        Returns
+        -------
+            None
         """
         entry = ComboBoxEntry(name, items=items)
         self.add_entry(entry)
 
     def __getitem__(self, item: int or str) -> Entry:
         """
-        Get an entry in the node by name or index
-        :param item: name or index of entry to get
-        :return: Entry: retrieved entry
+        Get an entry in the node by name or index.
+
+        Parameters
+        ----------
+        item : int or str
+            Index or name of entry to get
+
+        Returns
+        -------
+        :py:class:`~.entry.Entry`
+            Entry with specified name or index
+
+        Raises
+        ------
+        TypeError
+            If the specified item is not a string or integer
         """
         if isinstance(item, str):
             return self.get_entry(item)
@@ -421,9 +741,21 @@ class Node(QObject, metaclass=ObjectMeta):
 
     def __delitem__(self, key: int or str) -> None:
         """
-        Remove an entry from the node by name or index
-        :param key: name or index of entry to remove
-        :return: None
+        Remove an entry from the node by name or index.
+
+        Parameters
+        ----------
+        key : int or str
+            Index or name of entry to remove from the node.
+
+        Returns
+        -------
+            None
+
+        Raises
+        ------
+        TypeError
+            If the specified key is not a string or integer
         """
         # Find entry to remove
         if isinstance(key, str):
@@ -438,9 +770,17 @@ class Node(QObject, metaclass=ObjectMeta):
 
     def __contains__(self, item: Entry or str) -> bool:
         """
-        Check whether this node contains an entry
-        :param item: entry or name of entry
-        :return: bool: whether specified entry exists in the node
+        Check if this node contains the specified entry.
+
+        Parameters
+        ----------
+        item : :py:class:`~.entry.Entry` or str
+            The (name of the) entry to locate in the node
+
+        Returns
+        -------
+        bool
+            Whether the specified entry exists in the node
         """
         if isinstance(item, str):
             return item in self.entry_names()
@@ -448,22 +788,36 @@ class Node(QObject, metaclass=ObjectMeta):
 
     def __len__(self) -> int:
         """
-        Get the number of entries in this node
-        :return: int: number of node entries
+        Get the number of entries in this node..
+
+        Returns
+        -------
+        int
+            Number of entries in the node
         """
         return len(self.entries)
 
     def __str__(self) -> str:
         """
         Get a string representation of the node
-        :return: str: string representation of the node
+
+        Returns
+        -------
+        str
+            String representation of the node
         """
         return f"<Node '{self.title}' with {len(self)} entries>"
 
     def sockets(self) -> list['Socket']:
         """
-        Get a list of all sockets in the node
-        :return: list[Socket]: list of sockets
+        Get a list of all sockets in this node.
+
+        Goes through each entry and collects its socket (if it has one)
+
+        Returns
+        -------
+        list[:py:class:`~.socket.Socket`]
+            List of :py:class:`~.socket.Socket` objects that are in this node
         """
         result = []
         for entry in self.entries:
@@ -473,23 +827,62 @@ class Node(QObject, metaclass=ObjectMeta):
 
     def save(self) -> dict:
         """
-        Override to save any additional values to the node state
-        :return: dict: representation of additional values to save (has to be JSON-safe)
+        Override this method to save any additional values to the node state.
+
+        The dictionary returned by this function is saved along with the rest of the node state. It
+        is provided back to the :py:meth:`load` method when the node is loaded again.
+
+        Use this method to add any variables to the node state that are needed to restore the node
+        to the desired state when the node is loaded.
+
+        Returns
+        -------
+        dict:
+            Additional values to save (key, value pairs).
+
+            Must be JSON-safe.
+
+        :meta abstract:
         """
         return {}
 
     def load(self, state: dict) -> bool:
         """
-        Override to load any saved additional values from the node state (as saved in save())
-        :param state: representation of saved additional values to load
-        :return: bool: whether setting state succeeded
+        Override this method to load the saved additional values and restore the node state.
+
+        The received ``state`` is the same as the dictionary returned by the :py:meth:`save`
+        method (an empty dictionary if not overridden).
+
+        Use this method to use the saved values to restore the node to the desired state.
+
+        Parameters
+        ----------
+        state : dict
+            Saved additional values by :py:meth:`save`
+
+        Returns
+        -------
+        bool
+            Whether the method executed successfully
         """
         return True
 
     def get_state(self) -> dict:
         """
-        Get the state of the node as a dictionary
-        :return: dict: representation of the node state
+        Get ths state of this node as a (JSON-safe) dictionary.
+
+        The dictionary contains:
+        - ``code``: the unique code assigned to this node type
+        - ``title``: Title of the node
+        - ``pos_x``: X-location of the node in the scene
+        - ``pos_y``: Y-location of the node in the scene
+        - ``entries``: list of states for each entry
+        - ``custom``: additional values saved through the :py:meth:`save` method
+
+        Returns
+        -------
+        dict
+            JSON-safe dictionary representing the node state
         """
         return {
             'code': self.code,
@@ -502,10 +895,39 @@ class Node(QObject, metaclass=ObjectMeta):
 
     def set_state(self, state: dict, restore_id: bool = True) -> bool:
         """
-        Set the state of the node from a dictionary
-        :param state: representation of the node state
-        :param restore_id: whether to restore the object id from state
-        :return: bool: whether setting state succeeded
+        Set ths state of this node from a state dictionary.
+
+        The dictionary contains:
+        - ``code``: the unique code assigned to this node type
+        - ``title``: Title of the node
+        - ``pos_x``: X-location of the node in the scene
+        - ``pos_y``: Y-location of the node in the scene
+        - ``entries``: list of states for each entry
+        - ``custom``: additional values saved through the :py:meth:`save` method
+
+        Parameters
+        ----------
+        state : dict
+            Dictionary representation of the desired node state
+        restore_id : bool
+            Whether to restore the internal IDs of the node sockets (used to reconnect saved edges)
+
+            Is set to ``False`` for copy-paste operations (sockets take on new unique ID)
+
+        Returns
+        -------
+        dict
+            JSON-safe dictionary representing the node state
+
+        Raises
+        ------
+        ValueError
+            If the number of entry states in the ``state`` argument does not match the number of
+            entries in the node after running the :py:meth:`create` method.
+
+            If this occurs, the node does not have the same entries as when it was saved. Use the
+            :py:meth:`save` and :py:meth:`load` methods to save and restore additional values such
+            that the node ends up with the same entries.
         """
         # Call custom function that could be overloaded by derived classes
         result = self.load(state.get('custom', {}))

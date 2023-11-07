@@ -22,12 +22,15 @@ today_fmt = '%-d %B %Y at %H:%M'
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = ['sphinx.ext.autodoc',
-              'sphinx.ext.autosummary',
-              'sphinx.ext.napoleon',
-              'sphinx_toolbox.sidebar_links',
-              'sphinx_toolbox.github',
-              'sphinx_design']
+extensions = [
+    'sphinx.ext.autodoc',
+    'sphinx.ext.autosummary',
+    'sphinx.ext.napoleon',
+    'sphinx_toolbox.sidebar_links',
+    'sphinx_toolbox.github',
+    'sphinx_toolbox.more_autodoc.overloads',
+    'sphinx_design'
+]
 autosummary_generate = True
 autodoc_default_options = {
     'inherited-members': False

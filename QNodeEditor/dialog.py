@@ -225,7 +225,7 @@ class NodeEditorDialog(QDialog):
 
     def keyPressEvent(self, event: QKeyEvent) -> None:
         """
-        Prevent dialog from closing if return or enter is pressed
+        Prevent dialog from closing if return or enter is pressed. (private)
 
         Parameters
         ----------
