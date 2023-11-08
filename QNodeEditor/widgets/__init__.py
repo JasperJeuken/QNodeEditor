@@ -1,4 +1,6 @@
-"""Module containing custom widgets to use in nodes"""
+"""
+Module containing custom widgets to use in node entries
+"""
 from .value_box import ValueBox
 from .label import Label
 from .empty import EmptyWidget

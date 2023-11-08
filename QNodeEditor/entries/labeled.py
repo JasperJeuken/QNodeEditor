@@ -1,4 +1,6 @@
-"""Class containing an entry with a simple name label"""
+"""
+Module containing class for an entry with a simple name label
+"""
 # pylint: disable = no-name-in-module
 from PyQt5.QtWidgets import QHBoxLayout, QWidget
 from PyQt5.QtCore import Qt
@@ -10,12 +12,47 @@ from QNodeEditor.themes import ThemeType, DarkTheme
 
 
 class LabeledEntry(Entry):
-    """Entry housing a label displaying the name of the entry"""
+    """
+    Entry housing a label displaying the name of the entry.
+
+    The entry is left-aligned for static and input entries, but right-aligned for output entries.
+
+    Examples
+    --------
+    Example usage:
+
+    .. code-block:: python
+
+        entry = LabeledEntry('Some entry')
+
+        node = MyNode()
+        node.add_entry(entry)
+
+    The :py:class:`~QNodeEditor.node.Node` class also contains helper methods to create labeled
+    entries:
+
+    .. code-block:: python
+
+        node = MyNode()
+
+        node.add_label_entry('Some entry', Entry.TYPE_INPUT)
+        node.add_label_input('Some input')
+        node.add_label_output('Some output')
+
+    Attributes
+    ----------
+    label : :py:class:`~QNodeEditor.widgets.label.Label`
+        Label widget with custom theming
+    """
 
     def __init__(self, *args, theme: ThemeType = DarkTheme, **kwargs):
         """
-        Create label with entry name and add it to the layout
-        :param theme: theme for the label
+        Create a new labeled entry.
+
+        Parameters
+        ----------
+        theme : Type[:py:class:`~QNodeEditor.themes.theme.Theme`], optional
+            Theme for the entry (default: :py:class:`~QNodeEditor.themes.dark.DarkTheme`)
         """
         super().__init__(*args, **kwargs)
 
@@ -47,16 +84,28 @@ class LabeledEntry(Entry):
 
     def on_theme_change(self) -> None:
         """
-        Set the theme of the label
-        :return: None
+        Update the label theme when the entry theme changes.
+
+        Returns
+        -------
+            None
         """
         self.label.theme = self.theme
 
     def on_name_change(self, name: str) -> None:
         """
-        Update the label with the new (truncated) name
-        :param name: new name of the entry
-        :return: None
+        Update the label text when the entry name changes.
+
+        The name is truncated if necessary to fit into the available with.
+
+        Parameters
+        ----------
+        name : str
+            New entry name
+
+        Returns
+        -------
+            None
         """
         # Truncate the name if it is too long
         font_metrics = QFontMetrics(self.label.font())
@@ -69,7 +118,10 @@ class LabeledEntry(Entry):
 
     def on_resize(self, *_) -> None:
         """
-        Update the label to determine truncation
-        :return: None
+        Update the label text when the entry width changes (affects truncation).
+
+        Returns
+        -------
+            None
         """
         self.on_name_change(self.name)

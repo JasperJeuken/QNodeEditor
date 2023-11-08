@@ -1,4 +1,6 @@
-"""Custom combo box for selection inputs"""
+"""
+Module containing custom combo box for selection inputs
+"""
 # pylint: disable = no-name-in-module, C0103
 from PyQt5.QtWidgets import (QComboBox, QStyledItemDelegate, QStyleOptionViewItem, QApplication,
                              QFrame, QSizePolicy)
@@ -9,14 +11,26 @@ from QNodeEditor.themes import ThemeType, DarkTheme
 
 
 class ComboBox(QComboBox):
-    """Widget with a combo box that allows selection of predefined options"""
+    """
+    Widget with a combo box that allows selection of predefined options.
+
+    The combo box has a custom layout showing its name as an unselectable option in the drop-down
+    menu.
+    """
 
     popup_changed: pyqtSignal = pyqtSignal(bool)
+    """pyqtSignal -> bool: Signal that emits when the drop-down opens (True) or closes (False)"""
 
     def __init__(self, name: str, *args, theme: ThemeType = DarkTheme, **kwargs):
         """
-        Initialise combo box by setting theme
-        :param theme: theme to use for this widget
+        Create a new combo box.
+
+        Parameters
+        ----------
+        name : str
+            Name of the combo box
+        theme : Type[:py:class:`~QNodeEditor.themes.theme.Theme`], optional
+            Theme for the combo box (default: :py:class:`~QNodeEditor.themes.dark.DarkTheme`)
         """
         super().__init__(*args, **kwargs)
         self.name: str = name
@@ -39,18 +53,12 @@ class ComboBox(QComboBox):
     @property
     def theme(self) -> ThemeType:
         """
-        Get the current combo box theme
-        :return: ThemeType:
+        Get or set the combo box theme.
         """
         return self._theme
 
     @theme.setter
     def theme(self, new_theme: ThemeType) -> None:
-        """
-        Set a new theme for the combo box
-        :param new_theme: new theme
-        :return: None
-        """
         self._theme = new_theme
 
         # Create and set stylesheet
@@ -121,10 +129,21 @@ class ComboBox(QComboBox):
 
     def eventFilter(self, watched: QObject, event: QEvent) -> bool:
         """
-        Detect mouse leaving popup
-        :param watched: watched object (popup)
-        :param event: event
-        :return: bool: whether event should not be handled further
+        Close the drop-down menu if the mouse leaves the popup.
+
+        Parameters
+        ----------
+        watched : QObject
+            Object whose events are being processed (in this case: self)
+        event : QEvent
+            Event to handle
+
+        Returns
+        -------
+        bool
+            Whether event should not be handled further
+
+        :meta private:
         """
         if event.type() in (QEvent.Leave, QEvent.GraphicsSceneHoverLeave):
             self.hidePopup()
@@ -134,29 +153,48 @@ class ComboBox(QComboBox):
 
     def showPopup(self) -> None:
         """
-        Intercept popup open to emit popup change signal
-        :return: None
+        Emit change signal when opening popup.
+
+        Returns
+        -------
+            None
+
+        :meta private:
         """
         super().showPopup()
         self.popup_changed.emit(True)
 
     def hidePopup(self) -> None:
         """
-        Intercept popup close to emit popup change signal
-        :return: None
+        Emit change signal when closing popup.
+
+        Returns
+        -------
+            None
+
+        :meta private:
         """
         super().hidePopup()
         self.popup_changed.emit(False)
 
 
 class PopupItemDelegate(QStyledItemDelegate):
-    """Custom item for use in combo box drop-down popup"""
+    """
+    Custom item delegate used in combo box drop-down menu.
+
+    This class should not be used. It is automatically instantiated in a :py:class:`ComboBox`.
+    """
 
     def __init__(self, box: ComboBox, *args, theme: ThemeType = DarkTheme, **kwargs):
         """
-        Create delegate and set theme
-        :param box: box this item delegate is for
-        :param theme: item delegate theme
+        Create new item delegate.
+
+        Parameters
+        ----------
+        box : :py:class:`ComboBox`
+            Combo box this item delegate is for
+        theme : Type[:py:class:`~QNodeEditor.themes.theme.Theme`], optional
+            Theme for the item delegate (default: :py:class:`~QNodeEditor.themes.dark.DarkTheme`)
         """
         super().__init__(*args, **kwargs)
         self.box: ComboBox = box
@@ -165,26 +203,31 @@ class PopupItemDelegate(QStyledItemDelegate):
     @property
     def theme(self) -> ThemeType:
         """
-        Get the current item theme
-        :return: ThemeType: current item theme
+        Get or set the item delegate theme.
         """
         return self._theme
 
     @theme.setter
     def theme(self, new_theme: ThemeType) -> None:
-        """
-        Set a new theme for the item
-        :param new_theme: new item theme
-        :return: None
-        """
         self._theme = new_theme
 
     def sizeHint(self, option: QStyleOptionViewItem, index: QModelIndex) -> QSize:
         """
-        Set custom item size
-        :param option: style option
-        :param index: model index
-        :return: None
+        Enforce strict item height for the item delegate.
+
+        Parameters
+        ----------
+        option : QStyleOptionViewItem
+            Style option for the item
+        index : QModelIndex
+            Model index of item for which the size hint is requested
+
+        Returns
+        -------
+        QSize
+            Size of the item delegate
+
+        :meta private:
         """
         default_size = super().sizeHint(option, index)
         default_size.setHeight(self.theme.widget_height)
@@ -192,11 +235,24 @@ class PopupItemDelegate(QStyledItemDelegate):
 
     def paint(self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex) -> None:
         """
-        Paint the item at the specified index
-        :param painter: painter to draw with
-        :param option: style options
-        :param index: index of item
-        :return: None
+        Paint the item at the specified index.
+
+        Additionally, paint the combo box title below the final item.
+
+        Parameters
+        ----------
+        painter : QPainter
+            Painter object to draw with
+        option : QStyleOptionViewItem
+            Style option for the item
+        index : QModelIndex
+            Model index of item to paint
+
+        Returns
+        -------
+            None
+
+        :meta private:
         """
         super().paint(painter, option, index)
 

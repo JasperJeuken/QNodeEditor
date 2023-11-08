@@ -1,4 +1,6 @@
-"""Class containing an entry with a value box"""
+"""
+Module containing class for an entry with a value box
+"""
 from typing import Type
 
 from QNodeEditor.entry import Entry
@@ -7,7 +9,35 @@ from QNodeEditor.themes import ThemeType, DarkTheme
 
 
 class ValueBoxEntry(Entry):
-    """Entry housing a value box with a value and name"""
+    """
+    Entry housing a value box with a value and name
+
+    The value box is a number (float or integer) input. The user can drag their mouse to change the
+    value, or click on the box to enter a custom input manually. The value box can have a minimum
+    and/or maximum value.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        entry = ValueBoxEntry('Some entry', value=5, minimum=0, maximum=10, value_type=int)
+
+        node = MyNode()
+        node.add_entry(entry)
+
+    The :py:class:`~QNodeEditor.node.Node` class also contains helper methods to create value box
+    entries:
+
+    .. code-block:: python
+
+        node = MyNode()
+
+        node.add_value_entry('Some entry', Entry.TYPE_INPUT, value=5)
+        node.add_value_input('Some input', value=10.0, minimum=0.0)
+        node.add_value_output('Some output', value=15)
+
+    Note that the default value type is ``int``.
+    """
     widget: ValueBox  # set widget type for type hints
 
     def __init__(self,
@@ -20,13 +50,26 @@ class ValueBoxEntry(Entry):
                  theme: ThemeType = DarkTheme,
                  **kwargs):
         """
-        Create a value box with the entry name and value
-        :param name: name for the entry
-        :param value: initial value for the box
-        :param minimum: minimum value of the box
-        :param maximum: maximum value of the box
-        :param value_type: value type of the box (TYPE_INT or TYPE_FLOAT)
-        :param theme: theme for this entry
+        Create a new value box entry.
+
+        Parameters
+        ----------
+        name : str
+            Name of the entry
+        entry_type : int
+            The type of the entry (:py:attr:`~QNodeEditor.entry.Entry.TYPE_STATIC`,
+            :py:attr:`~QNodeEditor.entry.Entry.TYPE_INPUT`, or
+            :py:attr:`~QNodeEditor.entry.Entry.TYPE_OUTPUT`)
+        value : int or float
+            Initial value of the entry
+        minimum : int or float
+            Minimum value of the entry
+        maximum : int or float
+            Maximum value of the entry
+        value_type : Type[int] or Type[float]
+            Type of value of the entry (``int`` or ``float``)
+        theme : Type[:py:class:`~QNodeEditor.themes.theme.Theme`], optional
+            Theme for the entry (default: :py:class:`~QNodeEditor.themes.dark.DarkTheme`)
         """
         super().__init__(name, entry_type, **kwargs)
 
@@ -46,8 +89,14 @@ class ValueBoxEntry(Entry):
 
     def check_visible(self) -> None:
         """
-        Check if the value box should be visible (only when no input edges are connected)
-        :return: None
+        Hide/show the value box depending on input connections.
+
+        If the entry is an input and an edge is connected, hide the value box and only show a label.
+        Otherwise, show the value box.
+
+        Returns
+        -------
+            None
         """
         if (self.entry_type == self.TYPE_INPUT and self.socket is not None and
                 len(self.socket.edges) > 0):
@@ -57,8 +106,12 @@ class ValueBoxEntry(Entry):
 
     def save(self) -> dict:
         """
-        Save the value and range of the value box in the entry state
-        :return: dict: value box state
+        Save the value, minimum, and maximum of the value box in the entry state.
+
+        Returns
+        -------
+        dict
+            State of the value box
         """
         return {
             'value': self.widget.value,
@@ -68,9 +121,17 @@ class ValueBoxEntry(Entry):
 
     def load(self, state: dict) -> bool:
         """
-        Load the value and range of the value box from the entry state
-        :param state: entry state
-        :return: bool: whether setting state succeeded
+        Load the value, minimum, and maximum of the value box from an entry state.
+
+        Parameters
+        ----------
+        state : dict
+            Entry state
+
+        Returns
+        -------
+        bool
+            Whether setting state succeeded
         """
         self.widget.minimum = state.get('minimum', self.widget.minimum)
         self.widget.maximum = state.get('maximum', self.widget.maximum)
