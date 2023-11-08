@@ -74,6 +74,15 @@ class Node(QObject, metaclass=ObjectMeta):
     and can contain any data you want to save (as long as it is JSON-parsable). Whatever you choose
     to save will be provided back in the :py:meth:`load` function, so you can restore the state of
     your node.
+
+    Attributes
+    ----------
+    graphics : :py:class:`~.graphics.node.NodeGraphics`
+        Graphics object that is shown in the scene representing this edge
+    entries : list[:py:class:`~.entry.Entry`]
+        List of the entries in the node. List order is the same as vertical order of entries.
+    output : dict[str, Any] or None
+        Cached output of the node (do not use)
     """
 
     code: int
@@ -560,7 +569,8 @@ class Node(QObject, metaclass=ObjectMeta):
         name : str
             Name of this entry
         entry_type : int
-            Type of entry (:py:attr:`TYPE_STATIC`, :py:attr:`TYPE_INPUT`, or :py:attr:`TYPE_OUTPUT`)
+            Type of entry (:py:attr:`~.entry.Entry.TYPE_STATIC`, :py:attr:`~.entry.Entry.TYPE_INPUT`
+            , or :py:attr:`~.entry.Entry.TYPE_OUTPUT`)
         value : int or float
             Initial value of the :py:class:`~.widgets.value_box.ValueBox`
         minimum : int or float
@@ -645,7 +655,8 @@ class Node(QObject, metaclass=ObjectMeta):
         name : str
             Name of this entry
         entry_type : int
-            Type of entry (:py:attr:`TYPE_STATIC`, :py:attr:`TYPE_INPUT`, or :py:attr:`TYPE_OUTPUT`)
+            Type of entry (:py:attr:`~.entry.Entry.TYPE_STATIC`, :py:attr:`~.entry.Entry.TYPE_INPUT`
+            , or :py:attr:`~.entry.Entry.TYPE_OUTPUT`)
 
         Returns
         -------
@@ -841,7 +852,7 @@ class Node(QObject, metaclass=ObjectMeta):
         Returns
         -------
         dict:
-            Additional values to save (key, value pairs).
+            Additional values to save (key, value) pairs.
 
             Must be JSON-safe.
 

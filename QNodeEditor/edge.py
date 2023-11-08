@@ -45,11 +45,19 @@ class Edge(QObject, metaclass=ObjectMeta):
         edge = Edge(node1['Output'], node2['Value'])
         
     This adds an edge to the :py:class:`~.scene.NodeScene` the nodes are part of.
+
+    Attributes
+    ----------
+    graphics : :py:class:`~.graphics.edge.EdgeGraphics`
+        Graphics object that is shown in the scene representing this edge
     """
     # Create edge signals
     start_changed: pyqtSignal = pyqtSignal()
+    """pyqtSignal: Signal that is emitted when the start socket changed"""
     end_changed: pyqtSignal = pyqtSignal()
+    """pyqtSignal: Signal that is emitted when the end socket changed"""
     edge_type_changed: pyqtSignal = pyqtSignal()
+    """pyqtSignal: Signal that is emitted when the edge type is changed"""
 
     def __init__(self,
                  start: Optional[Socket] or Optional[Entry] = None,
