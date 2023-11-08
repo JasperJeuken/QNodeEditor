@@ -886,6 +886,7 @@ class Node(QObject, metaclass=ObjectMeta):
         Get the state of this node as a (JSON-safe) dictionary.
 
         The dictionary contains:
+
         - ``code``: the unique code assigned to this node type
         - ``title``: Title of the node
         - ``pos_x``: X-location of the node in the scene
@@ -912,6 +913,7 @@ class Node(QObject, metaclass=ObjectMeta):
         Set ths state of this node from a state dictionary.
 
         The dictionary contains:
+
         - ``code``: the unique code assigned to this node type
         - ``title``: Title of the node
         - ``pos_x``: X-location of the node in the scene

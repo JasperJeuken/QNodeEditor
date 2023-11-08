@@ -142,6 +142,7 @@ class Socket(QObject, metaclass=ObjectMeta):
         Get the state of the socket as a (JSON-safe) dictionary.
 
         The dictionary contains:
+
         - ``id``: The internal ID of the socket
 
         Returns
@@ -156,6 +157,10 @@ class Socket(QObject, metaclass=ObjectMeta):
     def set_state(self, state: dict, restore_id: bool = True) -> bool:
         """
         Set the state of this socket from a state dictionary.
+
+        The dictionary contains:
+
+        - ``id``: The internal ID of the socket
 
         Parameters
         ----------

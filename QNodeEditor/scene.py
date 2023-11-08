@@ -501,6 +501,7 @@ class NodeScene(QObject, metaclass=ObjectMeta):
 
         This function raises an error if the output node could not be found. This can be due to
         one of the following reasons:
+
         - No output node has been set through the :py:attr:`output_node` property
         - There is no instance of the specified output node in the scene
         - There is more than one instances of the specified output node in the scene
@@ -660,6 +661,7 @@ class NodeScene(QObject, metaclass=ObjectMeta):
         Get the state of this scene as a (JSON-safe) dictionary.
 
         The dictionary contains:
+
         - ``'nodes'``: list of node states
         - ``'edges'``: list of edge states
 
@@ -678,6 +680,7 @@ class NodeScene(QObject, metaclass=ObjectMeta):
         Set the state of this scene from a state dictionary.
 
         The dictionary contains:
+
         - ``'nodes'``: list of node states
         - ``'edges'``: list of edge states
 

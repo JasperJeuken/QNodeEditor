@@ -146,6 +146,7 @@ class Edge(QObject, metaclass=ObjectMeta):
         Create a graphics object for the edge based on the edge type in the theme
 
         The edge type defined in the edge :py:attr:`theme` can have the following values:
+
         - ``'linear'``: direct, linear line connecting the start and end point
         - ``'bezier'``: Bézier curve with automatic control points to create a smooth curve
 
@@ -330,6 +331,7 @@ class Edge(QObject, metaclass=ObjectMeta):
         Get the state of this edge as a (JSON-safe) dictionary.
 
         The dictionary contains:
+
         - ``start``: the ID of the start socket (or None if no start socket)
         - ``end``: the ID of the end socket (or None if no end socket)
 
@@ -346,6 +348,11 @@ class Edge(QObject, metaclass=ObjectMeta):
     def set_state(self, state: dict, lookup: dict[str, str] = None) -> bool:
         """
         Set the state of this edge from a state dictionary.
+
+        The dictionary contains:
+
+        - ``start``: the ID of the start socket (or None if no start socket)
+        - ``end``: the ID of the end socket (or None if no end socket)
 
         Parameters
         ----------

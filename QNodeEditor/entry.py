@@ -468,6 +468,7 @@ class Entry(QObject, metaclass=ObjectMeta):
         Get the state of this entry as a (JSON-safe) dictionary.
 
         The dictionary contains:
+
         - ``socket``: state of the entry socket
         - ``custom``: additional values saved through the :py:meth:`save` method
 
@@ -486,6 +487,7 @@ class Entry(QObject, metaclass=ObjectMeta):
         Set the state of this entry from a state dictionary.
 
         The dictionary contains:
+
         - ``socket``: state of the entry socket
         - ``custom``: additional values saved through the :py:meth:`save` method
 
