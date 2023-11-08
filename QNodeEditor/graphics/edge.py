@@ -1,4 +1,6 @@
-"""Extension of QGraphicsPathItem representing an edge"""
+"""
+Module containing extensions of QGraphicsPathItem representing various edge types.
+"""
 # pylint: disable = no-name-in-module, C0103
 from abc import abstractmethod
 from typing import TYPE_CHECKING
@@ -16,15 +18,21 @@ if TYPE_CHECKING:
 
 class EdgeGraphics(QGraphicsPathItem, metaclass=GraphicsPathItemMeta):
     """
-    Extension of QGraphicsPathItem for drawing an edge
-    Base class for various edge types
+    Extension of QGraphicsPathItem for drawing an edge.
+
+    This class is abstract. It serves as a base class for various edge types.
     """
 
     def __init__(self, edge: 'Edge', theme: ThemeType = DarkTheme):
         """
-        Create edge graphics by storing properties and drawing utilities
-        :param edge: edge the graphics belong to
-        :param theme: theme to use for this edge
+        Create new edge graphics.
+
+        Parameters
+        ----------
+        edge : :py:class:`~QNodeEditor.edge.Edge`
+            Edge these graphics are for
+        theme : Type[:py:class:`~QNodeEditor.themes.theme.Theme`], optional
+            Theme for the edge graphics (default: :py:class:`~QNodeEditor.themes.dark.DarkTheme`)
         """
         super().__init__()
         self.setFlags(QGraphicsItem.ItemIgnoresParentOpacity)
@@ -45,18 +53,12 @@ class EdgeGraphics(QGraphicsPathItem, metaclass=GraphicsPathItemMeta):
     @property
     def pos_start(self) -> QPointF:
         """
-        Get the start position of the edge
-        :return: QPointF: edge start position
+        Get or set the scene starting position of the edge.
         """
         return self._pos_start
 
     @pos_start.setter
     def pos_start(self, new_start: QPointF or QPoint) -> None:
-        """
-        Set a new start position for the edge
-        :param new_start: new start position
-        :return: None
-        """
         # Ensure new start position is QPointF
         if isinstance(new_start, QPoint):
             new_start = QPointF(new_start)
@@ -66,18 +68,12 @@ class EdgeGraphics(QGraphicsPathItem, metaclass=GraphicsPathItemMeta):
     @property
     def pos_end(self) -> QPointF:
         """
-        Get the end position of the edge
-        :return: QPointF: edge end position
+        Get or set the scene ending position of the edge.
         """
         return self._pos_end
 
     @pos_end.setter
     def pos_end(self, new_end: QPointF or QPoint) -> None:
-        """
-        Set a new end position for the edge
-        :param new_end: new end position
-        :return: None
-        """
         # Ensure new end position is QPointF
         if isinstance(new_end, QPoint):
             new_end = QPointF(new_end)
@@ -86,26 +82,45 @@ class EdgeGraphics(QGraphicsPathItem, metaclass=GraphicsPathItemMeta):
 
     def hoverEnterEvent(self, _) -> None:
         """
-        Detect hover enter and update edge
-        :return: None
+        Update the edge graphics if the mouse is hovered over it.
+
+        Returns
+        -------
+            None
+
+        :meta private:
         """
         self._hovered = True
         self.update()
 
     def hoverLeaveEvent(self, _) -> None:
         """
-        Detect hover leave and update edge
-        :return: None
+        Update the edge graphics if the mouse stops hovering over it.
+
+        Returns
+        -------
+            None
+
+        :meta private:
         """
         self._hovered = False
         self.update()
 
     def intersects_line(self, point1: QPointF, point2: QPointF) -> bool:
         """
-        Checks whether this edge intersects with a line segment
-        :param point1: line segment start point
-        :param point2: line segment end point
-        :return: bool: whether this edge intersects the line segment
+        Checks whether a line segment intersects with this edge.
+
+        Parameters
+        ----------
+        point1 : QPointF
+            Line segment starting point
+        point2 : QPointF
+            Line segment end point
+
+        Returns
+        -------
+        bool
+            Whether the line segment intersects the edge
         """
         path = QPainterPath(point1)
         path.lineTo(point2)
@@ -113,30 +128,55 @@ class EdgeGraphics(QGraphicsPathItem, metaclass=GraphicsPathItemMeta):
 
     def boundingRect(self) -> QRectF:
         """
-        Get the bounding box of the edge
-        :return: QRectF: edge bounding box
+        Get the bounding rectangle of the edge.
+
+        Returns
+        -------
+        QRectF
+            Edge bounding rectangle
+
+        :meta private:
         """
         return self.shape().boundingRect()
 
     def shape(self) -> QPainterPath:
         """
-        Get the shape of the edge
-        :return: QPainterPath: edge shape
+        Get the shape of the edge.
+
+        Returns
+        -------
+        QRectF
+            Edge shape
+
+        :meta private:
         """
         return self.create_path()
 
     @abstractmethod
     def create_path(self) -> QPainterPath:
         """
-        Abstract method that should create a painter path for the edge
-        :return: QPainterPath: path connecting edge start and end
+        Abstract method that calculates the path of the edge.
+
+        Returns
+        -------
+        QPainterPath
+            Path connecting start and end point
         """
 
     def paint(self, painter: QPainter, *_) -> None:
         """
         Draw the edge
-        :param painter: painter object to draw with
-        :return: None
+
+        Parameters
+        ----------
+        painter : QPainter
+            Painter object to draw with
+
+        Returns
+        -------
+            None
+
+        :meta private:
         """
         # Calculate edge path
         self.setPath(self.create_path())
@@ -166,12 +206,18 @@ class EdgeGraphics(QGraphicsPathItem, metaclass=GraphicsPathItemMeta):
 
 
 class DirectEdgeGraphics(EdgeGraphics):
-    """Edge graphics using a straight line between edge start and end"""
+    """
+    Edge graphics with  a straight line between the edge start and end point
+    """
 
     def create_path(self) -> QPainterPath:
         """
-        Create a direct line between edge start and end
-        :return: QPainterPath: direct path
+        Create a straight line between the edge start and end point
+
+        Returns
+        -------
+        QPainterPath
+            Straight line connecting start and end point
         """
         path = QPainterPath(self.pos_start)
         path.lineTo(self.pos_end)
@@ -179,12 +225,18 @@ class DirectEdgeGraphics(EdgeGraphics):
 
 
 class BezierEdgeGraphics(EdgeGraphics):
-    """Edge graphics using a Bézier curve between edge start and end"""
+    """
+    Edge graphics with a Bézier curve between edge start and end
+    """
 
     def create_path(self) -> QPainterPath:
         """
-        Create a Bézier curve between edge start and end
-        :return: QPainterPath: Bézier curve path
+        Create a Bézier curve between the edge start and end point
+
+        Returns
+        -------
+        QPainterPath
+            Bézier curve connecting start and end point
         """
         # Calculate control point locations
         distance = (self.pos_end.x() - self.pos_start.x()) / 2

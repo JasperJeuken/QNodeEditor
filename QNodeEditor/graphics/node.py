@@ -1,4 +1,6 @@
-"""Extension of QGraphicsItem representing a node"""
+"""
+Module containing extension of QGraphicsItem representing a node.
+"""
 # pylint: disable = no-name-in-module, C0103
 from typing import TYPE_CHECKING
 
@@ -13,13 +15,20 @@ if TYPE_CHECKING:
 
 
 class NodeGraphics(QGraphicsItem):
-    """Extension of QGraphicsItem for drawing a node"""
+    """
+    Extension of QGraphicsItem for drawing a node.
+    """
 
     def __init__(self, node: 'Node', theme: ThemeType = DarkTheme):
         """
-        Initialise node graphics by setting internal variables
-        :param node: node the graphics are for
-        :param theme: theme to use for this node
+        Create new node graphics.
+
+        Parameters
+        ----------
+        node : :py:class:`~QNodeEditor.node.Node`
+            Node these graphics are for
+        theme : Type[:py:class:`~QNodeEditor.themes.theme.Theme`], optional
+            Theme for the node graphics (default: :py:class:`~QNodeEditor.themes.dark.DarkTheme`)
         """
         super().__init__()
         self.node: Node = node
@@ -59,26 +68,19 @@ class NodeGraphics(QGraphicsItem):
     @property
     def width(self) -> float:
         """
-        Get the current width of the node
-        :return: float: node width
+        Get or set the width of the node.
         """
         return self._width
 
     @width.setter
     def width(self, new_width: float) -> None:
-        """
-        Set the node width
-        :param new_width: new node width
-        :return: None
-        """
         self.prepareGeometryChange()
         self._width = new_width
 
     @property
     def height(self) -> float:
         """
-        Calculate the height of the node
-        :return: float: node height
+        Get the height of the node.
         """
         height = self.header_height + 2 * self.theme.node_padding[1]
         if len(self.node.entries) > 0:
@@ -90,18 +92,14 @@ class NodeGraphics(QGraphicsItem):
     @property
     def theme(self) -> ThemeType:
         """
-        Gets the current theme
-        :return: ThemeType: current theme
+        Get or set the theme of the node.
+
+        Setting the theme will apply the theme to all children elements.
         """
         return self._theme
 
     @theme.setter
     def theme(self, new_theme: ThemeType) -> None:
-        """
-        Set a new theme
-        :param new_theme: new theme
-        :return: None
-        """
         self._theme = new_theme
         self.shadow_effect.setBlurRadius(self.theme.node_shadow_radius)
         self.shadow_effect.setOffset(*self.theme.node_shadow_offset)
@@ -114,9 +112,18 @@ class NodeGraphics(QGraphicsItem):
 
     def set_title(self, title: str) -> None:
         """
-        Set a new node title (updated in header)
-        :param title: new title
-        :return: None
+        Change the title of the node.
+
+        The title is automatically truncated if it would exceed the width of the node.
+
+        Parameters
+        ----------
+        title : str
+            New title for the node
+
+        Returns
+        -------
+            None
         """
         # Set title (truncate if longer than 80% of width)
         font_metrics = QFontMetrics(self._title_item.font())
@@ -131,9 +138,17 @@ class NodeGraphics(QGraphicsItem):
 
     def get_entry_geometry(self, entry: 'Entry') -> tuple[QPointF, float]:
         """
-        Determine the top-left position and available width for an entry
-        :param entry: entry to find position and width of
-        :return: tuple[QPointF, QSizeF]: top-left position and allowed width of entry
+        Determine the top-left position of an entry relative to the node top-left corner.
+
+        Parameters
+        ----------
+        entry : :py:class:`~QNodeEditor.entry.Entry`
+            Entry to calculate geometry for
+
+        Returns
+        -------
+        tuple[QPointF, float]
+            Top-left position and available width for the given entry.
         """
         # Get the index of the entry in the node entries
         idx = self.node.entries.index(entry)
@@ -146,26 +161,47 @@ class NodeGraphics(QGraphicsItem):
 
     def hoverEnterEvent(self, _) -> None:
         """
-        Redraw node with hovered state
-        :return: None
+        Update the node graphics if the mouse is hovered over it.
+
+        Returns
+        -------
+            None
+
+        :meta private:
         """
         self._hovered = True
         self.update()
 
     def hoverLeaveEvent(self, _) -> None:
         """
-        Redraw node without hovered state
-        :return: None
+        Update the node graphics if the mouse stops hovering over it.
+
+        Returns
+        -------
+            None
+
+        :meta private:
         """
         self._hovered = False
         self.update()
 
     def itemChange(self, change: QGraphicsItem.GraphicsItemChange, value: QVariant) -> QVariant:
         """
-        Detect changes to the node
-        :param change: parameter that changed
-        :param value: new value (type depends on change)
-        :return: QVariant: (modified) value
+        Update the node and connected edges if it was moved.
+
+        Parameters
+        ----------
+        change : QGraphicsItemChange
+            Change that occurred
+        value : QVariant
+            New value after change
+
+        Returns
+        -------
+        QVariant
+            Modified value after handling
+
+        :meta private:
         """
         # If the node is moving/was moved, update the edges with the new socket positions
         if change in (QGraphicsItem.ItemPositionChange, QGraphicsItem.ItemTransformChange,
@@ -178,16 +214,31 @@ class NodeGraphics(QGraphicsItem):
 
     def boundingRect(self) -> QRectF:
         """
-        Get the bounding box of the node
-        :return: QRectF: bounding box
+        Get the bounding rectangle of the node.
+
+        Returns
+        -------
+        QRectF
+            Node bounding rectangle
+
+        :meta private:
         """
         return QRectF(0, 0, self.width, self.height).normalized()
 
     def paint(self, painter: QPainter, *_) -> None:
         """
-        Draw the node
-        :param painter: painter object to draw with
-        :return: None
+        Draw the node.
+
+        Parameters
+        ----------
+        painter : QPainter
+            Painter object to draw with
+
+        Returns
+        -------
+            None
+
+        :meta private:
         """
         # Create node body (rounded rect below title bar with filled top corners)
         path_body = QPainterPath()

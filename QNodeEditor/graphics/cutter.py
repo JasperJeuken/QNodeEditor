@@ -1,4 +1,6 @@
-"""Extension of QGraphicsItem for graphics of an edge cutting line"""
+"""
+Module containing extension of QGraphicsItem for graphics of an edge cutting line..
+"""
 # pylint: disable = no-name-in-module, C0103
 from typing import TYPE_CHECKING
 
@@ -12,15 +14,23 @@ if TYPE_CHECKING:
 
 
 class Cutter(QGraphicsItem):
-    """Extension of QGraphicsItem for cutting edges with a line"""
+    """
+    Extension of QGraphicsItem for a line defined by points to cut edges with.
+    """
 
     def __init__(self, scene: 'NodeScene', parent: QGraphicsItem = None,
                  theme: ThemeType = DarkTheme):
         """
-        Create tracking variables and drawing utilities
-        :param scene: node scene this cutting line is active in
-        :param parent: parent item
-        :param theme: cutting line theme
+        Create a new cutting line.
+
+        Parameters
+        ----------
+        scene : :py:class:`~QNodeEditor.scene.NodeScene`
+            Scene the cutter should act in
+        parent : QGraphicsItem, optional
+            Parent item (if any)
+        theme : Type[:py:class:`~QNodeEditor.themes.theme.Theme`], optional
+            Theme for the cutting line (default: :py:class:`~QNodeEditor.themes.dark.DarkTheme`)
         """
         super().__init__(parent)
         self.scene: 'NodeScene' = scene
@@ -34,9 +44,16 @@ class Cutter(QGraphicsItem):
 
     def reset(self, position: QPoint or QPointF or None = None) -> None:
         """
-        Reset the cutting line
-        :param position: first scene position to add to reset cutting line (or None)
-        :return: None
+        Reset the cutting line by removing all points
+
+        Parameters
+        ----------
+        position : QPoint or QPointF, optional
+            Point to add after removing all points
+
+        Returns
+        -------
+            None
         """
         self._points.clear()
         if position is not None:
@@ -45,17 +62,27 @@ class Cutter(QGraphicsItem):
 
     def add_point(self, position: QPoint or QPointF) -> None:
         """
-        Add a new point to the cutting line
-        :param position: scene position to add to cutting line
-        :return: None
+        Add a point to the cutting line
+
+        Parameters
+        ----------
+        position : QPoint or QPointF
+            Scene position to add to cutting line
+
+        Returns
+        -------
+            None
         """
         self._points.append(QPointF(position))
         self.update()
 
     def cut(self) -> None:
         """
-        Cut the edges that this cutting line crosses
-        :return: None
+        Cut the edges that this cutting line intersects with.
+
+        Returns
+        -------
+            None
         """
         # Cannot cut anything if there is not at least two points
         if len(self._points) < 2:
@@ -73,18 +100,12 @@ class Cutter(QGraphicsItem):
     @property
     def theme(self) -> ThemeType:
         """
-        Get the current cutting line theme
-        :return: ThemeType: cutting line theme
+        Get or set the cutting line theme.
         """
         return self._theme
 
     @theme.setter
     def theme(self, new_theme: ThemeType) -> None:
-        """
-        Set a new theme for the cutting line
-        :param new_theme: new cutting line theme
-        :return: None
-        """
         self._theme = new_theme
         self._pen = QPen(new_theme.editor_color_cut)
         self._pen.setWidthF(new_theme.editor_cut_width)
@@ -92,15 +113,27 @@ class Cutter(QGraphicsItem):
 
     def boundingRect(self) -> QRectF:
         """
-        Get the bounding rectangle of the cutting line
-        :return: QRectF: bounding rectangle
+        Get the bounding rectangle of the cutting line.
+
+        Returns
+        -------
+        QRectF
+            Cutting line bounding rectangle
+
+        :meta private:
         """
         return self.shape().boundingRect()
 
     def shape(self) -> QPainterPath:
         """
-        Get a path representing the current cutting line
-        :return: QPainterPath: cutting line path
+        Get the shape of the cutting line.
+
+        Returns
+        -------
+        QPainterPath
+            Cutting line shape
+
+        :meta private:
         """
         # If there are at least two points, create a path
         if len(self._points) > 1:
@@ -116,9 +149,18 @@ class Cutter(QGraphicsItem):
 
     def paint(self, painter: QPainter, *_) -> None:
         """
-        Draw the cutting line
-        :param painter: painter object to draw with
-        :return: None
+        Draw the cutting line.
+
+        Parameters
+        ----------
+        painter : QPainter
+            Painter object to draw with
+
+        Returns
+        -------
+            None
+
+        :meta private:
         """
         # Set drawing properties
         painter.setRenderHint(QPainter.Antialiasing)
