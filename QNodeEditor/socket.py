@@ -1,4 +1,9 @@
-"""Container storing socket properties"""
+"""
+Socket containing a reference to all edges connected to it.
+
+This module contains a class derived from QObject. The object contains a list of edges connected to
+it.
+"""
 # pylint: disable = no-name-in-module
 from __future__ import annotations
 from typing import TYPE_CHECKING, Type
@@ -13,17 +18,38 @@ if TYPE_CHECKING:
 
 
 class Socket(QObject, metaclass=ObjectMeta):
-    """Class housing socket properties and connections"""
+    """
+    Socket container holding a reference to all edges connected to it.
+
+    This class should not be used since all socket instances are handled by
+    :py:class:`~.entry.Entry` instances automatically.
+
+    Attributes
+    ----------
+    entry : :py:class:`~.entry.Entry`
+        Entry this socket belongs to
+    edges : list[:py:class:`.edge.Edge`]
+        List of edges connected to this socket
+    graphics : :py:class:`.graphics.socket.SocketGraphics`
+        Graphics object that is shown in the scene representing this socket
+    """
 
     # Create socket signals
     connected: pyqtSignal = pyqtSignal()
+    """pyqtSignal: Signal that is emitted when a new edge is connected to the socket"""
     disconnected: pyqtSignal = pyqtSignal()
+    """pyqtSignal: Signal that is emitted when an edge is disconnected from the socket"""
 
     def __init__(self, entry: 'Entry', value_type: Type = int):
         """
-        Initialise by storing properties and creating graphics
-        :param entry: entry this socket belongs to
-        :param value_type: type of the value of the socket (determines color)
+        Create a new socket.
+
+        Parameters
+        ----------
+        entry : :py:class:`~.entry.Entry`
+            Entry this socket belongs to
+        value_type : Type
+            Type of the socket (not yet implemented)
         """
         super().__init__()
         self.id: str = str(id(self))
@@ -35,9 +61,16 @@ class Socket(QObject, metaclass=ObjectMeta):
 
     def add_edge(self, edge: 'Edge') -> None:
         """
-        Connect a new edge to the socket
-        :param edge: edge to connect to the socket
-        :return: None
+        Connect a new edge to the socket.
+
+        Parameters
+        ----------
+        edge : :py:class:`.edge.Edge`
+            Edge to connect to the socket
+
+        Returns
+        -------
+            None
         """
         self.edges.append(edge)
         self.connected.emit()
@@ -45,8 +78,15 @@ class Socket(QObject, metaclass=ObjectMeta):
     def remove_edge(self, edge: 'Edge') -> None:
         """
         Remove an edge from the socket
-        :param edge: edge to remove from the socket
-        :return: None
+
+        Parameters
+        ----------
+        edge : :py:class:`.edge.Edge`
+            Edge to remove from the socket
+
+        Returns
+        -------
+            None
         """
         if edge in self.edges:
             self.edges.remove(edge)
@@ -55,7 +95,10 @@ class Socket(QObject, metaclass=ObjectMeta):
     def remove_all_edges(self) -> None:
         """
         Remove all edges from the socket
-        :return: None
+
+        Returns
+        -------
+            None
         """
         while len(self.edges) > 0:
             edge = self.edges.pop(0)
@@ -63,8 +106,11 @@ class Socket(QObject, metaclass=ObjectMeta):
 
     def update_edges(self) -> None:
         """
-        Update all edges connected to the socket
-        :return: None
+        Update the graphics for all edges connected to this socket
+
+        Returns
+        -------
+            None
         """
         for edge in self.edges:
             edge.update_positions()
@@ -72,21 +118,36 @@ class Socket(QObject, metaclass=ObjectMeta):
     def __str__(self) -> str:
         """
         Get a string representation of the socket
-        :return: str: string representation of the socket
+
+        Returns
+        -------
+        str
+            Representation of the socket
         """
         return f"<Socket for entry '{self.entry.name}' ({len(self)} connections)>"
 
     def __len__(self) -> int:
         """
-        Get the number of edges connected to this socket
-        :return: int: number of connected edges
+        Get the number of edges connected to this socket.
+
+        Returns
+        -------
+        int
+            Number of edges connected to this socket
         """
         return len(self.edges)
 
     def get_state(self) -> dict:
         """
-        Get the state of the socket as a dictionary
-        :return: dict: representation of the socket state
+        Get the state of the socket as a (JSON-safe) dictionary.
+
+        The dictionary contains:
+        - ``id``: The internal ID of the socket
+
+        Returns
+        -------
+        dict
+            JSON-safe dictionary representing socket state
         """
         return {
             'id': self.id
@@ -94,10 +155,19 @@ class Socket(QObject, metaclass=ObjectMeta):
 
     def set_state(self, state: dict, restore_id: bool = True) -> bool:
         """
-        Set the state of the socket from a dictionary
-        :param state: representation of the socket state
-        :param restore_id: whether to restore the object id from state
-        :return: bool: whether setting state succeeded
+        Set the state of this socket from a state dictionary.
+
+        Parameters
+        ----------
+        state : dict
+            Dictionary representation of the desired socket state
+        restore_id : bool
+            Whether to restore the internal ID or use a new one
+
+        Returns
+        -------
+        bool
+            Whether setting the entry state succeeded.
         """
         if restore_id:
             self.id = state.get('id', self.id)
