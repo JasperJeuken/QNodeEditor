@@ -1,4 +1,6 @@
-"""Extension of QGraphicsProxyWidget representing node entries"""
+"""
+Module containing extension of QGraphicsProxyWidget representing node entries..
+"""
 # pylint: disable = no-name-in-module
 from typing import TYPE_CHECKING
 
@@ -9,12 +11,18 @@ if TYPE_CHECKING:
 
 
 class EntryGraphics(QGraphicsProxyWidget):
-    """Extension of QGraphicsItem for drawing a node entry"""
+    """
+    Extension of QGraphicsItem for drawing a node entry.
+    """
 
     def __init__(self, entry: 'Entry', *args, **kwargs):
         """
-        Initialise by storing reference to the entry the graphics are for
-        :param entry: entry the graphics are for
+        Create new entry graphics.
+
+        Parameters
+        ----------
+        entry: :py:class:`~QNodeEditor.entry.Entry`
+            Entry the graphics are for
         """
         super().__init__(*args, **kwargs)
         self.entry: 'Entry' = entry

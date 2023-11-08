@@ -1,4 +1,9 @@
-"""Scene container storing all node editor elements"""
+"""
+Scene containing nodes, edges, and utility functions
+
+This module contains a class derived from QObject. The object contains a list of nodes and edges
+that make up a node scene.
+"""
 # pylint: disable = no-name-in-module
 import json
 from typing import TYPE_CHECKING, Iterable, Type, overload, Optional
@@ -20,20 +25,68 @@ if TYPE_CHECKING:
 
 
 class NodeScene(QObject, metaclass=ObjectMeta):
-    """Scene container holding nodes, sockets, layouts, edges, etc..."""
+    """
+    Scene container holding nodes, sockets, layouts, edges, and utility functions.
+
+    This class represents a scene containing nodes connected by edges. The scene has a set number
+    of nodes that can be used in the scene, with one being the dedicated output node.
+
+    See the :py:attr:`available_nodes` property for details on how to set the nodes that can be used
+    in the scene, and see :py:attr:`output_node` for setting the dedicated output node.
+
+    Examples
+    --------
+    To create a new scene and add some nodes to it:
+
+    .. code-block:: python
+
+        # Create a scene
+        scene = NodeScene()
+
+        # Set the nodes that can be used in the scene
+        scene.available_nodes = {
+            'Some node': SomeNode,
+            'Another node': AnotherNode
+        }
+
+        # Set the node that is used as the output
+        scene.output_node = SomeNode
+
+        # Create two nodes and add them to the scene
+        node1 = SomeNode()
+        node2 = AnotherNode()
+        scene.addNodes([node1, node2])
+
+    To display a node scene, use a :py:class:`~.graphics.view.NodeView` instance.
+
+    Attributes
+    ----------
+    nodes : list[:py:class:`~.node.Node`]
+        List of nodes that are present in the scene
+    edges : list[:py:class:`~.edge.Edge`]
+        List of edges that are present in the scene
+    """
 
     # Create scene signals
-    evaluated: pyqtSignal = pyqtSignal(dict)     # emits evaluation result
-    errored: pyqtSignal = pyqtSignal(Exception)  # emits error if one occurs during evaluation
+    evaluated: pyqtSignal = pyqtSignal(dict)
+    """pyqtSignal -> dict: Signal that emits a dictionary with the result of evaluating the scene"""
+    errored: pyqtSignal = pyqtSignal(Exception)
+    """pyqtSignal -> Exception: Signal that emits the error if once occurs during evaluation"""
 
     # Create scene thread reference
     _thread: QThread = None
+    """QThread: Thread used for scene evaluation (or None when not evaluating)"""
     _worker: 'Worker' = None
+    """:py:class:`Worker`: Worker used to perform scene evaluation (or None when not evaluating)"""
 
     def __init__(self, parent: QWidget = None):
         """
-        Initialise scene with empty lists of nodes and edges
-        :param parent: parent widget
+        Create a new node scene.
+
+        Parameters
+        ----------
+        parent : QWidget, optional
+            Parent object for the node scene (if any)
         """
         super().__init__()
         self.nodes: list['Node'] = []
@@ -52,9 +105,16 @@ class NodeScene(QObject, metaclass=ObjectMeta):
 
     def add_node(self, node: 'Node') -> None:
         """
-        Add a new node to the scene
-        :param node: new node
-        :return: None
+        Add a new node to the scene.
+
+        Parameters
+        ----------
+        node : :py:class:`~.node.Node`
+            Node to add to the scene
+
+        Returns
+        -------
+            None
         """
         self.nodes.append(node)
         self.graphics.addItem(node.graphics)
@@ -63,18 +123,34 @@ class NodeScene(QObject, metaclass=ObjectMeta):
 
     def add_nodes(self, nodes: Iterable['Node']) -> None:
         """
-        Add new nodes to the scene
-        :param nodes: iterable of nodes
-        :return: None
+        Add multiple new nodes to the scene.
+
+        Parameters
+        ----------
+        nodes : Iterable[:py:class:`~.node.Node`]
+            Iterable of nodes to add to the scene
+
+        Returns
+        -------
+            None
         """
         for node in nodes:
             self.add_node(node)
 
     def remove_node(self, node: 'Node') -> None:
         """
-        Remove a node from the scene
-        :param node: node to remove
-        :return: None
+        Remove a node from the scene.
+
+        Does not raise an error if the node does not exist.
+
+        Parameters
+        ----------
+        node : :py:class:`~.node.Node`
+            Node to remove from the scene
+
+        Returns
+        -------
+            None
         """
         if node in self.nodes:
             self.nodes.remove(node)
@@ -82,8 +158,11 @@ class NodeScene(QObject, metaclass=ObjectMeta):
 
     def clear(self) -> None:
         """
-        Remove all nodes (and thus all edges) from the scene
-        :return: None
+        Remove all nodes (and thus all edges) from the scene.
+
+        Returns
+        -------
+            None
         """
         while len(self.nodes) > 0:
             self.nodes[0].remove()
@@ -91,9 +170,22 @@ class NodeScene(QObject, metaclass=ObjectMeta):
 
     def set_editing_flag(self, editing: bool) -> None:
         """
-        Set a flag showing that content is being edited (to prevent undesired event effects)
-        :param editing: whether content is being edited
-        :return: None
+        Set a flag showing that content is being edited in a node.
+
+        When this flag is set to ``True``, nodes will not be deleted when pressing the ``Delete``
+        key.
+
+        This flag is automatically set when a :py:class:`~.widgets.value_box.ValueBox` is edited, as
+        well as for select other widgets (see :py:meth:`~.entry.Entry.connect_signal`).
+
+        Parameters
+        ----------
+        editing : bool
+            Whether  content is being edited in a node.
+
+        Returns
+        -------
+            None
         """
         for view in self.graphics.views():
             if isinstance(view, NodeView):
@@ -101,53 +193,79 @@ class NodeScene(QObject, metaclass=ObjectMeta):
 
     def __str__(self) -> str:
         """
-        Get a string representation of the scene
-        :return: str: string representation of the scene
+        Get a string representation of the node scene
+
+        Returns
+        -------
+        str:
+            Representation of the node scene
         """
         return f"<NodeScene with {len(self.nodes)} nodes and {len(self.edges)} edges>"
 
     @property
     def output_node(self) -> Type[Node]:
         """
-        Get the type of node that is considered the scene output node
-        :return: Type[Node]: type of node that is used for output
+        Get or set the type of node that is considered the scene output.
+
+        The node that is set will not be evaluated. Instead, all inputs of this node will be
+        collected by traversing through the node scene. This is then collected and emitted as the
+        result of the scene through the :py:attr:`evaluated` signal.
+
+        The output node can be set by either passing the class type, its unique
+        :py:attr:`~.node.Node.code` property, or an instance of that node.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            # Create a scene and set the available nodes and output node
+            scene = NodeScene()
+            scene.available_nodes = {'Some node': SomeNode}
+            scene.output_node = SomeNode
+
+            # Create an instance of the output node and add it to the scene
+            node = SomeNode()  # Node with two inputs, 'Value 1' and 'Value 2'
+            scene.addNode(node)
+
+            # Evaluate the scene (without any connections to the output node)
+            scene.evaluated.connect(print)  # Give the scene result to the 'print' function
+            scene.evaluate()                # Start the evaluation
+
+        The output of this script looks like this:
+
+        .. code-block:: bash
+
+            $ python test.py
+
+            {'Value 1': None, 'Value 2': None}
+
+        The values for both items are ``None`` since nothing is wired into them.
+
+        If the input entries in ``SomeNode`` had widgets such as a
+        :py:class:`~.widgets.value_box.ValueBox`, its value would be used instead.
+
+        If the input entries were wired to another node, it would be evaluated and that result would
+        be used instead.
         """
         return self._output_node
 
     @output_node.setter
     @overload
     def output_node(self, code: int) -> None:
-        """
-        Set the node to use as output by its unique code
-        :param code: unique code for node to use as output node
-        :return: None
-        """
+        pass
 
     @output_node.setter
     @overload
     def output_node(self, node_class: Type[Node]) -> None:
-        """
-        Set the node to use as output by its class definition
-        :param node_class: class definition of node to use as output node
-        :return: None
-        """
+        pass
 
     @output_node.setter
     @overload
     def output_node(self, node: Node) -> None:
-        """
-        Set the node to use as output by an instance of the node
-        :param node: node instance for which class to use as output node
-        :return: None
-        """
+        pass
 
     @output_node.setter
     def output_node(self, node: Node or Type[Node] or int or None) -> None:
-        """
-        Set the type of node to use as the output node
-        :param node: code, class definition, or node instance from which to derive output node
-        :return: None
-        """
         # Clear output node if argument is None
         if node is None:
             self._output_node = None
@@ -167,19 +285,66 @@ class NodeScene(QObject, metaclass=ObjectMeta):
     @property
     def available_nodes(self) -> dict[str, Type['Node'] or dict]:
         """
-        Get the (nested) dictionary defining the names and classes
-        of the available nodes in the scene
-        :return: dict[str, Type[Node] or dict]: (nested) dictionary of (name, Node class) items
+        Get or set the nodes that can be used in the scene.
+
+        Setting the available nodes is done using a (nested) dictionary. The keys are used as names
+        in the node editor context menu, and the corresponding values are types of a node that are
+        placed when a name is selected.
+
+        You can only add nodes to the scene that are in the :py:attr:`available_nodes` property.
+        This is to keep track of the nodes such that they can be saved and loaded.
+
+        Nodes may only appear once in the (nested) dictionary.
+
+        Examples
+        --------
+        A scene with two nodes:
+
+        .. code-block:: python
+
+            scene.available_nodes = {
+                'Name 1': SomeNode,
+                'Name 2': AnotherNode
+            }
+
+        The resulting context menu would have the following structure:
+
+        .. code-block::
+
+            Add node
+             ├─ Name 1
+             └─ Name 2
+
+        Choosing either option results in placing a new instance of the corresponding node type.
+
+        A more complicated menu can be created like this:
+
+        .. code-block:: python
+
+            scene.available_nodes = {
+                'Name 1': SomeNode,
+                'Group 1': {
+                    'Name 2': AnotherNode,
+                    'Name 3': YetAnotherNode
+                },
+                'Name 4': FinalNode
+            }
+
+        The resulting context menu would now have the following structure:
+
+        .. code-block::
+
+            Add node
+             ├─ Name 1
+             ├─ Group 1
+             │   ├─ Name 2
+             │   └─ Name 3
+             └─ Name 4
         """
         return self._available_nodes
 
     @available_nodes.setter
     def available_nodes(self, new_available_nodes: dict[str, Type['Node'] or dict]) -> None:
-        """
-        Set the available nodes in the scene using a (nested) dictionary of (name, Node class) items
-        :param new_available_nodes: (nested) dictionary of (name, Node class) items
-        :return: None
-        """
         # Helper funtion that recursively parses a nested dictionary
         def _parse(section: dict[str, Type['Node'] or dict], known_codes: list[int] = None) -> None:
             if known_codes is None:
@@ -204,15 +369,65 @@ class NodeScene(QObject, metaclass=ObjectMeta):
 
     def available_codes(self) -> list[int]:
         """
-        Get a list of the codes of nodes that are available in the scene
-        :return: list[int]: list of unique codes available in the scene
+        Get a list of the unique codes of all nodes that are available in the scene.
+
+        Examples
+        --------
+        With the following value for the :py:attr:`available_nodes` property:
+
+        .. code-block:: python
+
+            scene.available_nodes = {
+                'Name 1': SomeNode,           # Unique code: 0
+                'Group 1': {
+                    'Name 2': AnotherNode,    # Unique code: 1
+                    'Name 3': YetAnotherNode  # Unique code: 2
+                },
+                'Name 4': FinalNode           # Unique code: 3
+            }
+
+        This function would return:
+
+        .. code-block:: python
+
+            [0, 1, 2, 3]
+
+        Returns
+        -------
+        list[int]
+            List of unique codes for all available nodes
         """
         return [node_class.code for node_class in self.available_classes()]
 
     def available_classes(self) -> list[Type[Node]]:
         """
-        Get a list of the class definition of nodes that are available in the scene
-        :return: list[Type[Node]]: list of class definitions of available nodes
+        Get a list of the class definitions of nodes that are available in the scene.
+
+        Examples
+        --------
+        With the following value for the :py:attr:`available_nodes` property:
+
+        .. code-block:: python
+
+            scene.available_nodes = {
+                'Name 1': SomeNode,
+                'Group 1': {
+                    'Name 2': AnotherNode,
+                    'Name 3': YetAnotherNode
+                },
+                'Name 4': FinalNode
+            }
+
+        This function would return:
+
+        .. code-block:: python
+
+            [SomeNode, AnotherNode, YetAnotherNode, FinalNode]
+
+        Returns
+        -------
+        list[Type[:py:class:`~.node.Node`]]
+            List of node classes for all available nodes
         """
         # Helper function that recursively parses a nested dictionary
         def _parse(section: dict[str, Type['Node']] or dict) -> list[Type[Node]]:
@@ -227,9 +442,24 @@ class NodeScene(QObject, metaclass=ObjectMeta):
 
     def get_node_class(self, code: int) -> Type['Node']:
         """
-        Get a node class definition by its unique code (if it is in the scene available nodes)
-        :param code: unique node code
-        :return: Type[Node]: node class definition
+        Get a node class definition by its unique code
+
+        This only works for nodes that are set in the :py:attr:`available_nodes` property.
+
+        Parameters
+        ----------
+        code : int
+            Unique code of node class definition to retrieve
+
+        Returns
+        -------
+        Type[:py:class:`~.node.Node`]
+            Node class definition matching the unique code
+
+        Raises
+        ------
+        ValueError
+            If no node with the specified unique code exists
         """
         # Helper function that recursively parses a nested dictionary
         def _parse(section: dict[str, Type['Node'] or dict], searched: int) -> list[Type['Node']]:
@@ -249,8 +479,15 @@ class NodeScene(QObject, metaclass=ObjectMeta):
 
     def socket_instances(self) -> dict[str, 'Socket']:
         """
-        Get a dictionary of ids and associated socket instances
-        :return: dict[str, Socket]: (id, Socket) pairs
+        Get a dictionary of all sockets and their IDs in this scene
+
+        The returned dictionaries has the socket ID (string) and socket instance as keys and values
+        respectively.
+
+        Returns
+        -------
+        dict[str, :py:class:`.socket.Socket`]
+            Dictionary of (ID, instance) pairs for all sockets in the scene
         """
         result: dict[str, 'Socket'] = {}
         for node in self.nodes:
@@ -260,8 +497,24 @@ class NodeScene(QObject, metaclass=ObjectMeta):
 
     def find_output_node(self) -> Node:
         """
-        Find the output node in the scene (must be exactly one)
-        :return: Node: output node
+        Find the instance of the output node in the scene (if any)
+
+        This function raises an error if the output node could not be found. This can be due to
+        one of the following reasons:
+
+        - No output node has been set through the :py:attr:`output_node` property
+        - There is no instance of the specified output node in the scene
+        - There is more than one instances of the specified output node in the scene
+
+        Returns
+        -------
+        :py:class:`~.node.Node`
+            Output node instance
+
+        Raises
+        ------
+        ValueError
+            If the node could not be found, or there is more than one output node instance
         """
         # Check if an output node has been set in the scene
         if self.output_node is None:
@@ -282,8 +535,17 @@ class NodeScene(QObject, metaclass=ObjectMeta):
 
     def evaluate(self) -> None:
         """
-        Evaluate the scene by traversing the nodes and return the calculated output value(s)
-        :return: dict[str, Any]: name and calculated value of all output node sockets
+        Evaluate the scene by traversing the nodes and their connections.
+
+        This starts the asynchronous evaluation of the scene. All nodes leading up to the output
+        node are evaluated, and the final result is emitted through the :py:attr:`evaluated` signal.
+
+        If an error occurs during the evaluation, it is emitted through the :py:attr:`errored`
+        signal (and nothing through the :py:attr:`evaluated` signal).
+
+        Returns
+        -------
+            None
         """
         # Create a QThread and place a worker on it
         self._thread = QThread()
@@ -301,8 +563,11 @@ class NodeScene(QObject, metaclass=ObjectMeta):
 
     def _handle_done(self) -> None:
         """
-        Close and clean up the thread and worker
-        :return: None
+        If the scene evaluation is completed, close all asynchronous elements.
+
+        Returns
+        -------
+            None
         """
         # Stop the thread if it is still running
         if self._thread.isRunning():
@@ -315,8 +580,15 @@ class NodeScene(QObject, metaclass=ObjectMeta):
 
     def _digraph(self) -> DiGraph:
         """
-        Create a directional graph for that represents the node scene
-        :return: DiGraph: directional graph representation
+        Create a directional graph that represents the node scene.
+
+        This graph is used to check for cycles in the graph to prevent infinite recursion when
+        evaluating.
+
+        Returns
+        -------
+        DiGraph
+            Directional graph object representing the nodes and connections in the scene.
         """
         graph = DiGraph()
 
@@ -336,8 +608,12 @@ class NodeScene(QObject, metaclass=ObjectMeta):
 
     def _check_cycles(self) -> bool:
         """
-        Check if the node scene nodes and edges contain cycles
-        :return: bool: whether the scene graph contains cycles
+        Check if the nodes and edges in the scene form a cycle.
+
+        Returns
+        -------
+        bool
+            Whether a cycle is present in the node scene
         """
         try:
             graph = self._digraph()
@@ -348,9 +624,16 @@ class NodeScene(QObject, metaclass=ObjectMeta):
 
     def save(self, filepath: str) -> None:
         """
-        Save the scene to a file
-        :param filepath: filepath to save scene to
-        :return: None
+        Save the scene state to a file.
+
+        Parameters
+        ----------
+        filepath : str
+            Path to file to save scene state to
+
+        Returns
+        -------
+            None
         """
         with open(filepath, 'w', encoding='utf-8') as file:
             state = json.dumps(self.get_state())
@@ -358,9 +641,16 @@ class NodeScene(QObject, metaclass=ObjectMeta):
 
     def load(self, filepath: str) -> None:
         """
-        Load the scene from a file
-        :param filepath: filepath to load scene from
-        :return: None
+        Load the scene state from a file
+
+        Parameters
+        ----------
+        filepath : str
+            Path to file to load scene state from
+
+        Returns
+        -------
+            None
         """
         with open(filepath, 'r', encoding='utf-8') as file:
             state = json.loads(file.read())
@@ -368,8 +658,17 @@ class NodeScene(QObject, metaclass=ObjectMeta):
 
     def get_state(self) -> dict:
         """
-        Get the state of the scene as a dictionary
-        :return: dict: representation of the scene state
+        Get the state of this scene as a (JSON-safe) dictionary.
+
+        The dictionary contains:
+
+        - ``'nodes'``: list of node states
+        - ``'edges'``: list of edge states
+
+        Returns
+        -------
+        dict
+            JSON-safe dictionary representing scene state
         """
         return {
             'nodes': [node.get_state() for node in self.nodes],
@@ -378,10 +677,24 @@ class NodeScene(QObject, metaclass=ObjectMeta):
 
     def set_state(self, state: dict, restore_id: bool = True) -> bool:
         """
-        Set the state of the scene from a dictionary
-        :param state: representation of the scene state
-        :param restore_id: whether to restore the object id from state
-        :return: bool: whether setting state succeeded
+        Set the state of this scene from a state dictionary.
+
+        The dictionary contains:
+
+        - ``'nodes'``: list of node states
+        - ``'edges'``: list of edge states
+
+        Parameters
+        ----------
+        state : dict
+            Dictionary representation of the desired scene state
+        restore_id : bool
+            Whether to restore the internal IDs of the entry sockets (used to reconnect saved edges)
+
+        Returns
+        -------
+        bool
+            Whether setting the scene state succeeded
         """
         # Clear the current scene
         self.clear()
@@ -419,16 +732,42 @@ class NodeScene(QObject, metaclass=ObjectMeta):
 
 
 class Worker(QObject):
-    """Worker class that runs on a thread to evaluate the node scene"""
+    """
+    Worker class that runs on a thread to evaluate the node scene.
 
-    finished: pyqtSignal = pyqtSignal(dict)      # emits result when evaluation is finished
-    errored: pyqtSignal = pyqtSignal(Exception)  # emits error when evaluation has errored
-    done: pyqtSignal = pyqtSignal()              # emits once worker is done
+    When run, traverses through a node scene starting from the output node and moving backwards
+    until all inputs have been determined.
+    """
+
+    finished: pyqtSignal = pyqtSignal(dict)
+    """pyqtSignal: Signal that emits result of scene evaluation if successful"""
+    errored: pyqtSignal = pyqtSignal(Exception)
+    """pyqtSignal: Signal that emits the exception if one occurred during evaluation"""
+    done: pyqtSignal = pyqtSignal()
+    """pyqtSignal: Signal that is emitted when the scene evaluation completed"""
 
     def run(self, scene: NodeScene) -> None:
         """
-        Evaluate the node scene (or catch any exception that is thrown)
-        :return:
+        Evaluate a node scene (or catch any exception that is thrown).
+
+        Goes through all output node inputs and traverses the scene until all of their inputs have
+        been calculated. This is collected in a dictionary and emitted as the result through the
+        :py:attr:`finished` signal.
+
+        If an error occurred at some point, it is caught and emitted through the :py:attr:`errored`
+        signal.
+
+        Finally, whether successful or not, the :py:attr:`done` signal is emitted to signal that
+        the worker has completed the evaluation.
+
+        Parameters
+        ----------
+        scene : :py:class:`NodeScene`
+            Scene to evaluate
+
+        Returns
+        -------
+            None
         """
         try:
             # Prevent infinite recursion when cycles exist in the scene

@@ -1,4 +1,6 @@
-"""Class containing an entry with a combo box"""
+"""
+Module containing a class for an entry with a combo box
+"""
 from typing import Iterable, Any
 
 from QNodeEditor.entry import Entry
@@ -7,15 +9,54 @@ from QNodeEditor.themes import ThemeType, DarkTheme
 
 
 class ComboBoxEntry(Entry):
-    """Entry housing a combo box with a set of items and a name"""
+    """
+    Entry housing a combo box with a set of items and a name.
+
+    The combo box menu is forced to be displayed on top of other items. The bottom of the drop-down
+    menu shows the name of the combo box.
+
+    Examples
+    --------
+    Example usage:
+
+    .. code-block:: python
+
+        entry = ComboBoxEntry('Some entry', ['Option 1', 'Option 2', 'Option 3'])
+
+        node = MyNode()
+        node.add_entry(entry)
+
+    The :py:class:`~QNodeEditor.node.Node` class also contains helper methods to create combo box
+    entries:
+
+    .. code-block:: python
+
+        node = MyNode()
+
+        node.add_combo_box_entry('Some entry', {'Option 1': 10, 'Option 2': 5, 'Option 3': 15})
+
+    Note that combo box entries can only be static.
+    """
     widget: ComboBox
 
     def __init__(self, *args, items: Iterable[str] or dict[str, Any] = None,
                  theme: ThemeType = DarkTheme, **kwargs):
         """
-        Create a combo box with the entry name
-        :param items: items to add to the combo box (either only texts or (text, data) pairs)
-        :param theme: theme for this entry
+        Create a new combo box entry.
+
+        Parameters
+        ----------
+        items : Iterable[str] or dict[str, Any]
+            Items to add to the combo box.
+
+            If ``items`` is an iterable of strings, they will be used as the names of the options,
+            and the selected name is returned as the value of the combo box entry.
+
+            If ``items`` is a dictionary, the keys will be used as the names of the options, and the
+            values as the data associated with those options. The data associated to the selected
+            option is then returned as the value of the combo box entry.
+        theme : Type[:py:class:`~QNodeEditor.themes.theme.Theme`], optional
+            Theme for the entry (default: :py:class:`~QNodeEditor.themes.dark.DarkTheme`)
         """
         super().__init__(*args, **kwargs)
 
@@ -39,8 +80,16 @@ class ComboBoxEntry(Entry):
 
     def set_z_order(self, popup_visible: bool) -> None:
         """
-        Change the z-value of the widget popup to ensure it is drawn on top
-        :return: None
+        Change the z-value of the combo box popup to ensure it is drawn on top..
+
+        Parameters
+        ----------
+        popup_visible : bool
+            Whether the popup is visible
+
+        Returns
+        -------
+            None
         """
         if popup_visible:
             self.widget.graphicsProxyWidget().setZValue(999)
@@ -50,7 +99,11 @@ class ComboBoxEntry(Entry):
     def save(self) -> dict:
         """
         Save the current index of the combo box in the entry state
-        :return: dict: combo box state
+
+        Returns
+        -------
+        dict
+            State of the combo box
         """
         return {
             'index': self.widget.currentIndex()
@@ -58,9 +111,17 @@ class ComboBoxEntry(Entry):
 
     def load(self, state: dict) -> bool:
         """
-        Load the current index of the combo box from the entry state
-        :param state: entry state
-        :return: whether setting state succeeded
+        Load the current combo box index from an entry state
+
+        Parameters
+        ----------
+        state : dict
+            Entry state
+
+        Returns
+        -------
+        bool
+            Whether setting state succeeded
         """
         self.widget.setCurrentIndex(state.get('index', self.widget.currentIndex()))
         return True

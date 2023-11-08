@@ -1,4 +1,6 @@
-"""Class handling clipboard interaction for node scenes"""
+"""
+Module containing class handling clipboard interaction for node scenes
+"""
 # pylint: disable = no-name-in-module
 from typing import TYPE_CHECKING
 import json
@@ -15,19 +17,36 @@ if TYPE_CHECKING:
 
 
 class Clipboard:
-    """Class that handles cutting/copying/pasting for node scenes"""
+    """
+    Class that handles cutting/copying/pasting for node scenes.
+
+    This class contains methods that are called when items in a node scene are copied,
+    pasted, or cut.
+
+    Attributes
+    ----------
+    scene : :py:class:`~QNodeEditor.scene.NodeScene`
+        Node scene this clipboard manager is for
+    """
 
     def __init__(self, scene: 'NodeScene'):
         """
-        Store the scene the clipboard is associated with
-        :param scene: node scene clipboard management is for
+        Create a new clipboard manager.
+
+        Parameters
+        ----------
+        scene : :py:class:`~QNodeEditor.scene.NodeScene`
+            Node scene this clipboard manager is for
         """
         self.scene: 'NodeScene' = scene
 
     def copy(self) -> None:
         """
-        Store the state of the selected items in the clipboard
-        :return: None
+        Copy the state of the selected scene items to the clipboard
+
+        Returns
+        -------
+            None
         """
         state = self.get_selected_state()
         state_str = json.dumps(state, indent=1)
@@ -35,8 +54,11 @@ class Clipboard:
 
     def cut(self) -> None:
         """
-        Store the state of the selected items in the clipboard and remove them
-        :return: None
+        Copy the state of the selected scene items to the clipboard, then remove them.
+
+        Returns
+        -------
+            None
         """
         state = self.get_selected_state(True)
         state_str = json.dumps(state, indent=1)
@@ -44,8 +66,11 @@ class Clipboard:
 
     def paste(self) -> None:
         """
-        Try pasting items from the clipboard into the scene
-        :return: None
+        Paste items into the scene from a clipboard state.
+
+        Returns
+        -------
+            None
         """
         state_str = QApplication.clipboard().text()
         try:
@@ -64,8 +89,12 @@ class Clipboard:
 
     def _get_view(self) -> NodeView:
         """
-        Get the node view graphics object of the scene
-        :return: NodeView: view graphics object
+        Get the node view graphics object of the scene.
+
+        Returns
+        -------
+        :py:class:`~QNodeEditor.graphics.view.NodeView`
+            Node view showing the scene the clipboard manager is for
         """
         for view in self.scene.graphics.views():
             if isinstance(view, NodeView):
@@ -74,9 +103,17 @@ class Clipboard:
 
     def get_selected_state(self, remove_after: bool = False) -> dict:
         """
-        Get the state of the selected items
-        :param remove_after: whether to remove selected items after reading state
-        :return: dict: selected items state
+        Get the state of the selected scene items as a (JSON-safe) dictionary.
+
+        Parameters
+        ----------
+        remove_after : bool
+            Whether to remove the selected items after getting their state
+
+        Returns
+        -------
+        dict
+            JSON-safe dictionary representing selected scene items state
         """
         # Get the selected nodes and edges from the scene and create a socket lookup table
         node_states = []
@@ -112,9 +149,16 @@ class Clipboard:
 
     def add_state(self, state: dict) -> None:
         """
-        Set a state loaded from the clipboard to the scene
-        :param state: state to add to scene
-        :return: None
+        Add items to the scene from a state dictionary.
+
+        Parameters
+        ----------
+        state : dict
+            Dictionary containing desired state of items to add
+
+        Returns
+        -------
+            None
         """
         view = self._get_view()
         mouse_pos = view.mapToScene(view.prev_mouse_pos)

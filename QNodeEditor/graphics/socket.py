@@ -1,4 +1,6 @@
-"""Extension of QGraphicsItem representing a socket"""
+"""
+Module containing extension of QGraphicsItem representing a socket.
+"""
 # pylint: disable = no-name-in-module, C0103
 from typing import TYPE_CHECKING
 
@@ -12,12 +14,20 @@ if TYPE_CHECKING:
 
 
 class SocketGraphics(QGraphicsItem):
-    """Extension of QGraphicsItem for drawing a socket"""
+    """
+    Extension of QGraphicsItem for drawing a socket.
+    """
 
     def __init__(self, socket: 'Socket', theme: ThemeType = DarkTheme):
         """
-        Initialise by setting properties and creating drawing utilities
-        :param socket: socket the graphics are for
+        Create new socket graphics.
+
+        Parameters
+        ----------
+        socket : :py:class:`~QNodeEditor.socket.Socket`
+            Socket these graphics are for
+        theme :  Type[:py:class:`~QNodeEditor.themes.theme.Theme`], optional
+            Theme for the socket (default: :py:class:`~QNodeEditor.themes.dark.DarkTheme`)
         """
         super().__init__(socket.entry.graphics)
         self.socket: Socket = socket
@@ -31,18 +41,12 @@ class SocketGraphics(QGraphicsItem):
     @property
     def theme(self) -> ThemeType:
         """
-        Get the socket theme
-        :return: current socket theme
+        Get or set the socket theme.
         """
         return self._theme
 
     @theme.setter
     def theme(self, new_theme: ThemeType) -> None:
-        """
-        Set a new socket theme
-        :param new_theme: new socket theme
-        :return: None
-        """
         self._theme = new_theme
 
         # Set socket colors and outline
@@ -52,8 +56,11 @@ class SocketGraphics(QGraphicsItem):
 
     def update_position(self) -> None:
         """
-        Update the position of the socket relative to the node entry
-        :return: None
+        Update the position of the socket relative to the entry it is in.
+
+        Returns
+        -------
+            None
         """
         # Determine x-location
         if (self.socket.entry.node is None or
@@ -68,15 +75,25 @@ class SocketGraphics(QGraphicsItem):
 
     def get_scene_position(self) -> QPointF:
         """
-        Get the position of this socket in scene coordinates
-        :return: QPointF: socket position in scene
+        Get the position of this socket in scene coordinates.
+
+        Returns
+        -------
+        QPointF
+            Scene position of this socket
         """
         return self.pos() + self.socket.entry.graphics.pos() + self.socket.entry.node.graphics.pos()
 
     def boundingRect(self) -> QRectF:
         """
-        Get the bounding box of the socket
-        :return: QRectF: bounding box
+        Get the bounding rectangle of the socket.
+
+        Returns
+        -------
+        QRectF
+            Socket bounding rectangle
+
+        :meta private:
         """
         return QRectF(
             -1 * (self.theme.socket_radius + self.theme.socket_outline_width),
@@ -87,9 +104,18 @@ class SocketGraphics(QGraphicsItem):
 
     def paint(self, painter: QPainter, *_) -> None:
         """
-        Draw the socket
-        :param painter: painter object to draw with
-        :return: None
+        Draw the socket.
+
+        Parameters
+        ----------
+        painter : QPainter
+            Painter object to paint with
+
+        Returns
+        -------
+            None
+
+        :meta private:
         """
         painter.setBrush(self._brush)
         painter.setPen(self._pen)

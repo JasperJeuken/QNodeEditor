@@ -1,4 +1,6 @@
-"""Extension of QGraphicsView for node editor"""
+"""
+Module containing extension of QGraphicsView for node editor.
+"""
 # pylint: disable = no-name-in-module, C0103
 from typing import Optional, Type
 from math import sqrt
@@ -22,18 +24,31 @@ from QNodeEditor.themes import ThemeType, DarkTheme, LightTheme
 
 
 class NodeView(QGraphicsView):
-    """Extension of QGraphicsView for viewing and interacting with a node scene"""
+    """
+    Extension of QGraphicsView for viewing and interacting with a node scene.
+
+    A :py:class:`NodeView` displays a scene.
+    """
 
     STATE_DEFAULT: int = 0
+    """int: Default state (no action taking place)"""
     STATE_CUTTING: int = 1
+    """int: Cutting state (a :py:class:`~.cutter.Cutter` is being drawn)"""
     STATE_DRAGGING: int = 2
+    """int: Dragging state (a new edge is being dragged)"""
     STATE_PLACING: int = 3
+    """int: Placing state (a item or group of items is being placed)"""
 
     def __init__(self, scene_graphics: NodeSceneGraphics, theme: ThemeType = DarkTheme):
         """
-        Initialise graphics view by settings drawing properties and tracking variables
-        :param scene_graphics: graphics scene in the view
-        :param theme: theme for the node view
+        Create a new node view.
+
+        Parameters
+        ----------
+        scene_graphics : :py:class:`~.scene.NodeSceneGraphics`
+            Scene graphics this view is for.
+        theme :  Type[:py:class:`~QNodeEditor.themes.theme.Theme`], optional
+            Theme for the node view (default: :py:class:`~QNodeEditor.themes.dark.DarkTheme`)
         """
         super().__init__(scene_graphics)
         self.scene_graphics: NodeSceneGraphics = scene_graphics
@@ -82,18 +97,12 @@ class NodeView(QGraphicsView):
     @property
     def theme(self) -> ThemeType:
         """
-        Get the current theme of the node view
-        :return: ThemeType: current theme
+        Get or set the node view theme.
         """
         return self._theme
 
     @theme.setter
     def theme(self, new_theme: ThemeType) -> None:
-        """
-        Set a new theme for the node view
-        :param new_theme: new theme
-        :return: None
-        """
         self._theme = new_theme
 
         # Set a new stylesheet
@@ -110,9 +119,18 @@ class NodeView(QGraphicsView):
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
         """
-        Listen for mouse press events
-        :param event: mouse event
-        :return: None
+        Listen for mouse button press.
+
+        Parameters
+        ----------
+        event : QMouseEvent
+            Mouse button press event
+
+        Returns
+        -------
+            None
+
+        :meta private:
         """
         # Call custom handler for button presses
         if event.button() == Qt.MiddleButton:
@@ -126,9 +144,17 @@ class NodeView(QGraphicsView):
 
     def mouseReleaseEvent(self, event: QMouseEvent) -> None:
         """
-        Listen for mouse release events
-        :param event: mouse event
-        :return: None
+        Listen for mouse button release.
+        Parameters
+        ----------
+        event : QMouseEvent
+            Mouse button release event
+
+        Returns
+        -------
+            None
+
+        :meta private:
         """
         # Call custom handler for button releases
         if event.button() == Qt.MiddleButton:
@@ -142,18 +168,36 @@ class NodeView(QGraphicsView):
 
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
         """
-        Listen for mouse movement
-        :param event: mouse move event
-        :return: None
+        Listen for mouse movement.
+
+        Parameters
+        ----------
+        event : QMouseEvent
+            Mouse move event
+
+        Returns
+        -------
+            None
+
+        :meta private:
         """
         self.mouse_move(event)
         super().mouseMoveEvent(event)
 
     def wheelEvent(self, event: QWheelEvent) -> None:
         """
-        Listen for mouse scroll events
-        :param event: mouse scroll event
-        :return: None
+        Handle mouse scrolls.
+
+        Parameters
+        ----------
+        event : QWheelEvent
+            Mouse scroll event
+
+        Returns
+        -------
+            None
+
+        :meta private:
         """
         if event.angleDelta().y() > 0:
             self.zoom_in()
@@ -162,9 +206,18 @@ class NodeView(QGraphicsView):
 
     def keyPressEvent(self, event: QKeyEvent) -> None:
         """
-        Listen for key presses
-        :param event: key press event
-        :return: None
+        Handle key presses.
+
+        Parameters
+        ----------
+        event : QKeyEvent
+            Key press event
+
+        Returns
+        -------
+            None
+
+        :meta private:
         """
         # Remove selected items (if content is not being edited)
         if event.key() == Qt.Key_Delete and not self._editing:
@@ -206,9 +259,18 @@ class NodeView(QGraphicsView):
 
     def left_mouse_button_press(self, event: QMouseEvent) -> None:
         """
-        Handle left mouse button press
-        :param event: mouse press event
-        :return: None
+        Handle left mouse button press.
+
+        Parameters
+        ----------
+        event : QMouseEvent
+            Mouse button press event
+
+        Returns
+        -------
+            None
+
+        :meta private:
         """
         self._last_left_click = self.mapToScene(event.pos())
         clicked_item = self.itemAt(event.pos())
@@ -250,27 +312,54 @@ class NodeView(QGraphicsView):
 
     def right_mouse_button_press(self, event: QMouseEvent) -> None:
         """
-        Handle right mouse button press
-        :param event: mouse press event
-        :return: None
+        Handle right mouse button press.
+
+        Parameters
+        ----------
+        event : QMouseEvent
+            Mouse button press event
+
+        Returns
+        -------
+            None
+
+        :meta private:
         """
         self.prev_mouse_pos = event.pos()
         self._last_right_click = event.globalPos()
 
     def middle_mouse_button_press(self, event: QMouseEvent) -> None:
         """
-        Handle middle mouse button press
-        :param event: mouse press event
-        :return: None
+        Handle middle mouse button press.
+
+        Parameters
+        ----------
+        event : QMouseEvent
+            Mouse button press event
+
+        Returns
+        -------
+            None
+
+        :meta private:
         """
         # Use default handler otherwise
         super().mousePressEvent(event)
 
     def left_mouse_button_release(self, event: QMouseEvent) -> None:
         """
-        Handle left mouse button release
-        :param event: mouse release event
-        :return: None
+        Handle left mouse button release.
+
+        Parameters
+        ----------
+        event : QMouseEvent
+            Mouse release press event
+
+        Returns
+        -------
+            None
+
+        :meta private:
         """
         released_item = self.itemAt(event.pos())
 
@@ -303,9 +392,18 @@ class NodeView(QGraphicsView):
 
     def right_mouse_button_release(self, event: QMouseEvent) -> None:
         """
-        Handle right mouse button release
-        :param event: mouse release event
-        :return: None
+        Handle right mouse button release.
+
+        Parameters
+        ----------
+        event : QMouseEvent
+            Mouse release press event
+
+        Returns
+        -------
+            None
+
+        :meta private:
         """
         # Open context menu if mouse was not dragged
         if (self._state == self.STATE_DEFAULT and
@@ -328,18 +426,36 @@ class NodeView(QGraphicsView):
 
     def middle_mouse_button_release(self, event: QMouseEvent) -> None:
         """
-        Handle middle mouse button release
-        :param event: mouse release event
-        :return: None
+        Handle middle mouse button release.
+
+        Parameters
+        ----------
+        event : QMouseEvent
+            Mouse release press event
+
+        Returns
+        -------
+            None
+
+        :meta private:
         """
         # Use default handler otherwise
         super().mouseReleaseEvent(event)
 
     def mouse_move(self, event: QMouseEvent) -> None:
         """
-        Handle mouse movement
-        :param event: mouse move event
-        :return: None
+        Handle mouse movement.
+
+        Parameters
+        ----------
+        event : QMouseEvent
+            Mouse move event
+
+        Returns
+        -------
+            None
+
+        :meta private:
         """
         # Calculate mouse position change
         offset = self.prev_mouse_pos - event.pos()
@@ -370,17 +486,35 @@ class NodeView(QGraphicsView):
 
     def set_editing_flag(self, editing: bool) -> None:
         """
-        Set flag that indicates whether content is being edited
-        :param editing: whether content is being edited
-        :return: None
+        Set a flag to indicate that node content is (not) being edited.
+
+        When the flag is set to ``True``, items will not be deleted when pressing ``Del``. This
+        prevents accidental removal of scene items while typing in a text box.
+
+        Parameters
+        ----------
+        editing : bool
+            Whether content is being edited in the scene
+
+        Returns
+        -------
+            None
         """
         self._editing = editing
 
     def start_drag(self, socket_graphics: SocketGraphics) -> None:
         """
-        Start dragging an edge from this socket
-        :param socket_graphics: start socket for edge
-        :return: None
+        Start dragging an edge from this socket.
+
+        Parameters
+        ----------
+        socket_graphics : :py:class:`~.socket.SocketGraphics`
+
+        Returns
+        -------
+            None
+
+        :meta private:
         """
         self._state = self.STATE_DRAGGING
         self._drag_start = socket_graphics.socket
@@ -393,9 +527,21 @@ class NodeView(QGraphicsView):
 
     def end_drag(self, item: QGraphicsItem or None) -> None:
         """
-        Stop dragging the edge
-        :param item: item that was clicked to end the drag
-        :return: None
+        Stop dragging an edge and if applicable create a persistent edge.
+
+        A persistent edge is created if the item the drag was ended on is a socket or entry with a
+        socket.
+
+        Parameters
+        ----------
+        item : QGraphicsItem or None
+            Item that the drag was ended on
+
+        Returns
+        -------
+            None
+
+        :meta private:
         """
         # Reset tracking variables
         self._state = self.STATE_DEFAULT
@@ -430,9 +576,21 @@ class NodeView(QGraphicsView):
 
     def calculate_drag_pos(self, mouse_pos: QPoint) -> QPoint:
         """
-        Determine the dragged edge end position based on the mouse location (snap to sockets)
-        :param mouse_pos: mouse position (in scene coordinates)
-        :return: QPoint: end location for dragged edge
+        Calculate the end position of the dragged edge based on the mouse location.
+
+        The position snaps to nearby sockets if they are within the snap radius.
+
+        Parameters
+        ----------
+        mouse_pos : QPoint
+            Mouse position in scene coordinates
+
+        Returns
+        -------
+        QPoint
+            New end position for the dragged edge
+
+        :meta private:
         """
         dragged_socket = self.get_drag_socket(mouse_pos)
         if dragged_socket is not None:
@@ -441,9 +599,19 @@ class NodeView(QGraphicsView):
 
     def get_drag_socket(self, mouse_pos: QPoint) -> Socket or None:
         """
-        Get the socket the drag should connect to (or None if not connected to any socket)
-        :param mouse_pos: mouse position (global coordinates)
-        :return: Socket or None: dragged socket (or None if hovering freely)
+        Get the socket a dragged edge should connect to.
+
+        Parameters
+        ----------
+        mouse_pos : QPoint
+            Mouse position in global coordinates
+
+        Returns
+        -------
+        :py:class:`~QNodeEditor.socket.Socket` or None
+            Socket the dragged edge should connect to (or None if hovering freely)
+
+        :meta private:
         """
         # Use nearest socket position if within snap radius
         socket, dist = self.closest_socket(self.mapToScene(mouse_pos))
@@ -460,9 +628,19 @@ class NodeView(QGraphicsView):
 
     def closest_socket(self, pos: QPoint) -> tuple[Socket, float]:
         """
-        Find the socket closest to a position
-        :param pos: position relative to which to look for sockets
-        :return: tuple[Socket, float]: closest socket and its distance to the specified position
+        Find the socket closest to a position.
+
+        Parameters
+        ----------
+        pos : QPoint
+            Position to find the closest socket to in scene coordinates
+
+        Returns
+        -------
+        tuple[:py:class:`~QNodeEditor.socket.Socket`, float]
+            The closest socket and its distance from the point
+
+        :meta private:
         """
         min_dist = float('inf')
         min_socket = None
@@ -481,11 +659,25 @@ class NodeView(QGraphicsView):
     def mouse_dragged(self, release_point: QPoint, button: Qt.MouseButton = Qt.LeftButton,
                       threshold: int = 3) -> bool:
         """
-        Determine if the mouse was dragged more than some threshold
-        :param release_point: point of release
-        :param button: which mouse button was pressed
-        :param threshold: minimum distance to classify as drag
-        :return: bool: whether mouse was dragged
+        Determine if the mouse was dragged more than some threshold.
+
+        This method is used to determine if the mouse was dragged or was clicked.
+
+        Parameters
+        ----------
+        release_point : QPoint
+            Point where mouse button was released
+        button : Qt.MouseButton
+            Which mouse button was pressed and released
+        threshold : int
+            Minimum distance mouse should have moved to count as a drag instead of a click
+
+        Returns
+        -------
+        bool
+            Whether the mouse movement is considered a drag
+
+        :meta private:
         """
         press_point = self._last_left_click if button == Qt.LeftButton else self._last_right_click
         delta = sqrt((press_point.x() - release_point.x()) * (press_point.x() - release_point.x()) +
@@ -494,8 +686,11 @@ class NodeView(QGraphicsView):
 
     def zoom_in(self) -> None:
         """
-        Zoom in by a step
-        :return: None
+        Zoom in by one step.
+
+        Returns
+        -------
+            None
         """
         # Increase internal zoom tracker
         self._zoom += 1.0
@@ -508,8 +703,11 @@ class NodeView(QGraphicsView):
 
     def zoom_out(self) -> None:
         """
-        Zoom out by a step
-        :return: None
+        Zoom out by one step.
+
+        Returns
+        -------
+            None
         """
         # Decrease internal zoom tracker
         self._zoom -= 1.0
@@ -522,8 +720,11 @@ class NodeView(QGraphicsView):
 
     def zoom_reset(self) -> None:
         """
-        Reset the zoom level to initial value
-        :return: None
+        Reset the zoom level to its initial value.
+
+        Returns
+        -------
+            None
         """
         if self._zoom > 10:
             while self._zoom > 10:
@@ -534,8 +735,11 @@ class NodeView(QGraphicsView):
 
     def remove_selected(self) -> None:
         """
-        Remove all selected items in the scene
-        :return: None
+        Remove all selected items from the scene.
+
+        Returns
+        -------
+            None
         """
         for item in self.scene_graphics.selectedItems():
             if isinstance(item, EdgeGraphics):
@@ -545,9 +749,18 @@ class NodeView(QGraphicsView):
 
     def create_context_menu(self, position: QPoint) -> None:
         """
-        Create a context menu and open it in the specified position
-        :param position: global position to open context menu at
-        :return: None
+        Create a context menu at the specified position.
+
+        Parameters
+        ----------
+        position : QPoint
+            Position to open context menu at in global coordinates
+
+        Returns
+        -------
+            None
+
+        :meta private:
         """
         # Create context menu
         context_menu = QMenu()
@@ -574,9 +787,16 @@ class NodeView(QGraphicsView):
 
     def _create_add_menu(self, parent_menu: QMenu) -> None:
         """
-        Add a nested menu with available nodes in the scene
-        :param parent_menu: parent menu
-        :return: None
+        Add a nested menu with the available nodes in the scene to a parent menu.
+
+        Parameters
+        ----------
+        parent_menu : QMenu
+            Parent menu
+
+        Returns
+        -------
+            None
         """
         # Helper function that recursively adds actions to the context menu
         def _add_actions(section: dict[str, Type[Node] or dict], menu: QMenu):
@@ -602,9 +822,16 @@ class NodeView(QGraphicsView):
 
     def _add_clipboard_actions(self, parent_menu: QMenu) -> None:
         """
-        Add menu actions for clipboard (cut/copy/paste and delete)
-        :param parent_menu: parent menu
-        :return: None
+        Add a menu with clipboard actions to a parent menu.
+
+        Parameters
+        ----------
+        parent_menu : QMenu
+            Parent menu
+
+        Returns
+        -------
+            None
         """
         # Create actions
         action_cut = QAction('Cut selection', parent_menu)
@@ -636,9 +863,16 @@ class NodeView(QGraphicsView):
 
     def _add_zoom_actions(self, parent_menu: QMenu) -> None:
         """
-        Add menu actions for zooming (zoom in, zoom out, reset zoom)
-        :param parent_menu: parent menu
-        :return: None
+        Add a menu with zoom actions to a parent menu.
+
+        Parameters
+        ----------
+        parent_menu : QMenu
+            Parent menu
+
+        Returns
+        -------
+            None
         """
         # Create actions
         action_zoom_in = QAction('Zoom in', parent_menu)
@@ -663,10 +897,18 @@ class NodeView(QGraphicsView):
 
     def _add_node_actions(self, parent_menu: QMenu, node_graphics: NodeGraphics) -> None:
         """
-        Add menu actions that can be performed on a right-clicked node
-        :param parent_menu: parent menu
-        :param node_graphics: NodeGraphics object that was right-clicked
-        :return: None
+        Add a menu with actions that can be performed on a node to a parent menu.
+
+        Parameters
+        ----------
+        parent_menu : QMenu
+            Parent menu
+        node_graphics : :py:class:`~.node.NodeGraphics`
+            Node graphics the context menu was opened on
+
+        Returns
+        -------
+            None
         """
         # Create actions
         action_remove = QAction('Remove node', parent_menu)
@@ -683,10 +925,18 @@ class NodeView(QGraphicsView):
     @staticmethod
     def _add_socket_actions(parent_menu: QMenu, socket_graphics: SocketGraphics) -> None:
         """
-        Add menu actions that can be performed on a right-clicked socket
-        :param parent_menu: parent menu
-        :param socket_graphics: SocketGraphics object that was right-clicked
-        :return: None
+        Add a menu with actions that can be performed on a socket to a parent menu.
+
+        Parameters
+        ----------
+        parent_menu : QMenu
+            Parent menu
+        socket_graphics : :py:class:`~.socket.SocketGraphics`
+            Socket graphics the context menu was opened on
+
+        Returns
+        -------
+            None
         """
         # Create action
         action_disconnect = QAction('Disconnect edges', parent_menu)
@@ -699,9 +949,18 @@ class NodeView(QGraphicsView):
 
     def add_node(self, node_class: Type[Node]) -> None:
         """
-        Add a new node to the scene at the specified position
-        :param node_class: node class definition to add
-        :return: None
+        Start placing a node of the specified type.
+
+        Parameters
+        ----------
+        node_class : Type[:py:class:`~QNodeEditor.node.Node`]
+            Type of node to start placing
+
+        Returns
+        -------
+            None
+
+        :meta private:
         """
         node = node_class()
         self.scene_graphics.scene.add_node(node)
@@ -715,9 +974,18 @@ class NodeView(QGraphicsView):
 
     def duplicate_node(self, node_graphics: NodeGraphics) -> None:
         """
-        Duplicate an instance of a node
-        :param node_graphics: graphics of node to duplicate
-        :return: None
+        Duplicate an instance of a node and start placing it.
+
+        Parameters
+        ----------
+        node_graphics : :py:class:`~.node.NodeGraphics`
+            Node instance to duplicate
+
+        Returns
+        -------
+            None
+
+        :meta private:
         """
         # Create duplicate node to add to the scene
         duplicate = type(node_graphics.node)()
@@ -732,9 +1000,18 @@ class NodeView(QGraphicsView):
 
     def move_selection(self, position: QPoint) -> None:
         """
-        Center the selected items in the scene around a position
-        :param position: scene position to center selected items around
-        :return: None
+        Move the center point of the selected items to a specified position.
+
+        Parameters
+        ----------
+        position : QPoint
+            Position to center selected items around in scene coordinates
+
+        Returns
+        -------
+            None
+
+        :meta private:
         """
         # Calculate the coordinate of the center of the selected items
         min_x, max_x = float('inf'), float('-inf')
@@ -756,8 +1033,13 @@ class NodeView(QGraphicsView):
 
     def duplicate_selection(self) -> None:
         """
-        Duplicate the selected items
-        :return:
+        Duplicate the selected items and start placing them.
+
+        Returns
+        -------
+            None
+
+        :meta private:
         """
         # Check if there are selected nodes
         selected_nodes = False
@@ -775,7 +1057,11 @@ class NodeView(QGraphicsView):
 
     def __str__(self) -> str:
         """
-        Get a string representation of the view
-        :return: str: string representation of the view
+        Get a string representation of the node view.
+
+        Returns
+        -------
+        str
+            Representation of the node view
         """
         return f"<NodeView for '{self.scene_graphics.scene}'>"

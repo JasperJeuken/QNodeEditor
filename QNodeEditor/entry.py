@@ -1,5 +1,11 @@
-"""Container storing elements for a node entry"""
+"""
+Entry containing widgets and optionally a socket for inputs/outputs.
+
+This module contains a class derived from QObject. The object contains a widget and optionally a
+socket, depending on the set entry type.
+"""
 # pylint: disable = no-name-in-module
+from abc import abstractmethod
 from typing import TYPE_CHECKING, Optional, Any
 
 from PyQt5.QtWidgets import QWidget
@@ -16,26 +22,95 @@ if TYPE_CHECKING:
 
 
 class Entry(QObject, metaclass=ObjectMeta):
-    """Entry container storing entry layout and sockets"""
+    """
+    Entry container holding a widget and an optional socket for input/output.
 
+    This class is abstract and cannot be used by itself. To define entries to use in nodes, inherit
+    from this class and override the ``__init__`` method (making sure to call
+    ``super().__init__()``) to set the entry properties.
+
+    Examples
+    --------
+    To define an entry with a QLabel and an input socket:
+
+    .. code-block:: python
+
+            from PyQt5.QtWidgets import QLabel
+
+
+            class MyEntry(Entry):
+
+                def __init__(self, name):
+                    super().__init__(name, Entry.TYPE_INPUT)
+
+                    self.widget = QLabel(name)
+
+    The :py:attr:`widget` property can be set to add a widget to the entry. This can be any widget.
+    The widget is constrained in width by the node, but not in height.
+
+    We can connect to signals in the entry to update our widget if required:
+
+    .. code-block:: python
+        :emphasize-lines: 3, 5, 6
+
+        def __init__(self, name):
+            ...
+            self.name_changed.connect(self.handle_name_change)
+
+        def handle_name_change(self, new_name):
+            self.widget.setText(new_name)
+
+    The available signals are:
+
+    - :py:attr:`edge_connected`: Emitted when an edge is connected to this entry
+    - :py:attr:`edge_disconnected`: Emitted when an edge is disconnected from this entry
+    - :py:attr:`name_changed`: Emitted when the name of this entry is changed
+    - :py:attr:`theme_changed`: Emitted when the theme of this entry is changed
+    - :py:attr:`resized`: Emitted when the entry width is resized
+
+    Attributes
+    ----------
+    graphics : :py:class:`~.graphics.entry.EntryGraphics`
+        Graphics object that is shown in the scene representing this entry
+    value : Any
+        Output value of this entry (if not set: :py:class:`~.util.NoValue`)
+    """
+
+    # Possible types of entry
     TYPE_STATIC: int = 0
+    """int: Static entry type with no input or output"""
     TYPE_INPUT: int = 1
+    """int: Input entry type with an input socket"""
     TYPE_OUTPUT: int = 2
+    """int: Output entry type with an output socket"""
 
     # Create entry signals
     edge_connected: pyqtSignal = pyqtSignal()
+    """pyqtSignal: Signal that is emitted when an edge is connected to this entry"""
     edge_disconnected: pyqtSignal = pyqtSignal()
+    """pyqtSignal: Signal that is emitted when an edge is disconnected from this entry"""
     value_changed: pyqtSignal = pyqtSignal(Any)
+    """pyqtSignal -> Any: Signal that emits the new value of the entry widget if it changed"""
     name_changed: pyqtSignal = pyqtSignal(str)
+    """pyqtSignal -> str: Signal that emits the new name of then entry if it changed"""
     theme_changed: pyqtSignal = pyqtSignal()
+    """pyqtSignal: Signal that is emitted when the theme of the entry is changed"""
     resized: pyqtSignal = pyqtSignal(float)
+    """pyqtSignal -> float: Signal that is emitted when the width of the entry is changed"""
 
     def __init__(self, name: str, entry_type: int = TYPE_STATIC, theme: ThemeType = DarkTheme):
         """
-        Create a new entry with the specified type
-        :param name: name for this entry (unique in node)
-        :param entry_type: type of entry (input, output, or static (default))
-        :param theme: theme for the entry
+        Create a new entry.
+
+        Parameters
+        ----------
+        name : str
+            The name for the entry
+        entry_type : int
+            The type of the entry (:py:attr:`TYPE_STATIC`, :py:attr:`TYPE_INPUT`, or
+            :py:attr:`TYPE_OUTPUT`)
+        theme : Type[:py:class:`~QNodeEditor.themes.theme.Theme`], optional
+            Theme for the entry (default: :py:class:`~QNodeEditor.themes.dark.DarkTheme`)
         """
         super().__init__()
 
@@ -61,8 +136,7 @@ class Entry(QObject, metaclass=ObjectMeta):
     @property
     def name(self) -> str:
         """
-        Get the name of the entry
-        :return: str: name of entry
+        Get or set the name of the entry
         """
         return self._name
 
@@ -78,8 +152,20 @@ class Entry(QObject, metaclass=ObjectMeta):
 
     def calculate_value(self) -> Any:
         """
-        Calculate the value of this entry (either through its widget or a connected edge)
-        :return: Any: value of the entry
+        Calculate the value of this entry.
+
+        There are two cases:
+
+        - If this entry is an input and an edge is connected, evaluate the connected node and take
+          its value.
+        - Otherwise, use the value of the widget in the entry (None if unable to retrieve value).
+
+        See :py:func:`~.util.get_widget_value` for the supported widgets.
+
+        Returns
+        -------
+        Any
+            Value of this entry
         """
         # If this entry is static/output or there are no edges connected, return the widget value
         if self.entry_type in (self.TYPE_STATIC, self.TYPE_OUTPUT) or len(self.socket.edges) == 0:
@@ -90,8 +176,12 @@ class Entry(QObject, metaclass=ObjectMeta):
 
     def _get_connected_value(self) -> Any:
         """
-        Get the value of the output entry that is connected to this input entry
-        :return: Any: value of connected entry
+        Get the value of the output entry that is connected to this input entry.
+
+        Returns
+        -------
+        Any
+            Value of the connected output entry.
         """
         # Get the entry that is connected to the input socket
         edge = self.socket.edges[0]
@@ -107,18 +197,15 @@ class Entry(QObject, metaclass=ObjectMeta):
     @property
     def theme(self) -> ThemeType:
         """
-        Get the theme of the entry
-        :return: ThemeType: current theme
+        Get or set the theme of the entry.
+
+        Setting the theme of the entry affects all child elements.
         """
         return self._theme
 
     @theme.setter
     def theme(self, new_theme: ThemeType) -> None:
-        """
-        Set a new theme for the entry
-        :param new_theme: new entry theme
-        :return: None
-        """
+        # Set the theme and update the entry padding
         self._theme = new_theme
         self.update_padding()
 
@@ -136,18 +223,12 @@ class Entry(QObject, metaclass=ObjectMeta):
     @property
     def node(self) -> Optional['Node']:
         """
-        Get the node this entry is part of (or None if not part of a node)
-        :return: Node or None: node this entry is part of (or None)
+        Get or set the node this entry is part of.
         """
         return self._node
 
     @node.setter
     def node(self, new_node: Optional['Node']) -> None:
-        """
-        Set the node this entry is part of
-        :param new_node: new node to set as parent
-        :return: None
-        """
         # Disconnect any signals from the old scene
         self.disconnect_signal()
 
@@ -165,18 +246,14 @@ class Entry(QObject, metaclass=ObjectMeta):
     @property
     def widget(self) -> QWidget:
         """
-        Get the widget that is displayed in this entry
-        :return: QWidget: entry widget
+        Get or set the widget that is displayed in this entry.
+
+        Setting the widget will automatically attach signals to detect a value change (if possible).
         """
         return self._widget
 
     @widget.setter
     def widget(self, new_widget: QWidget) -> None:
-        """
-        Set a new widget to display in this entry
-        :param new_widget: new entry widget
-        :return: None
-        """
         # Disconnect any signals from the old widget
         self.disconnect_signal()
 
@@ -202,18 +279,14 @@ class Entry(QObject, metaclass=ObjectMeta):
     @property
     def socket(self) -> Socket or None:
         """
-        Get the socket for this entry (or None if there is none)
-        :return: Socket or None: entry socket (or None)
+        Get or set the socket for this entry (None if there is no socket)
+
+        Setting the socket will automatically attach signals to detect edge changes.
         """
         return self._socket
 
     @socket.setter
     def socket(self, new_socket: Optional[Socket]) -> None:
-        """
-        Set a new socket for this entry
-        :param new_socket: new entry socket
-        :return: None
-        """
         # Disconnect edge signals from old socket
         if self.socket is not None:
             try:
@@ -233,8 +306,13 @@ class Entry(QObject, metaclass=ObjectMeta):
 
     def update_geometry(self) -> None:
         """
-        Update the geometry of the entry based on the node settings
-        :return: None
+        Update the position and width of the entry based on the node settings.
+
+        After this update, update all connected edges in case the socket positions changed.
+
+        Returns
+        -------
+            None
         """
         # Set position and width of entry in the node
         pos, width = self.node.graphics.get_entry_geometry(self)
@@ -249,15 +327,21 @@ class Entry(QObject, metaclass=ObjectMeta):
 
     def update_padding(self) -> None:
         """
-        Update the padding for the widget based on the theme
-        :return: None
+        Update the padding for the entry widget based on the set theme
+
+        Returns
+        -------
+            None
         """
         self.widget.setContentsMargins(self.theme.node_padding[0], 0, self.theme.node_padding[0], 0)
 
     def disconnect_signal(self) -> None:
         """
-        Disconnect editing signal from the scene
-        :return: None
+        Disconnect the editing signal from the entry widget.
+
+        Returns
+        -------
+            None
         """
         # Disconnect custom widgets with editing signal
         if hasattr(self.widget, 'editing'):
@@ -270,8 +354,11 @@ class Entry(QObject, metaclass=ObjectMeta):
 
     def connect_signal(self) -> None:
         """
-        Connect editing signal to the scene
-        :return: None
+        Connect an editing signal to the entry widget.
+
+        Returns
+        -------
+            None
         """
         # Disconnect signals and ensure node and scene are set
         self.disconnect_signal()
@@ -284,8 +371,13 @@ class Entry(QObject, metaclass=ObjectMeta):
 
     def remove(self) -> None:
         """
-        Remove this entry from the node
-        :return: None
+        Remove this entry from the node it is part of.
+
+        Any edges connected to this entry are also removed.
+
+        Returns
+        -------
+            None
         """
         # Disconnect any edges connected to this entry
         if self.socket is not None:
@@ -308,38 +400,82 @@ class Entry(QObject, metaclass=ObjectMeta):
 
     def add_socket(self) -> Socket:
         """
-        Add a socket to the entry
-        :return: Socket: added socket
+        Create a socket for the entry
+
+        Returns
+        -------
+        :py:class:`~.socket.Socket`
+            Created socket
         """
         return Socket(self)
 
     def __str__(self) -> str:
         """
         Get a string representation of the entry
-        :return: str: string representation of the entry
+
+        Returns
+        -------
+        str
+            Representation of the entry
         """
         type_names = ['Static', 'Input', 'Output']
         return f"<{type_names[self.entry_type]} entry '{self.name})>"
 
     def save(self) -> dict:
         """
-        Override to save any additional values to the entry state
-        :return: dict: representation of additional values to save (has to be JSON-safe)
+        Override this method to save any additional values to the entry state.
+
+        The dictionary returned by this function is saved along with the rest of the entry state. It
+        is provided back to the :py:meth:`load` method when the node is loaded again.
+
+        Use this method to add any variables to the node state that are needed to restore the entry
+        to the desired state when the entry is loaded.
+
+        Returns
+        -------
+        dict
+            Additional values to save (key, value) pairs.
+
+            Must be JSON-safe
+
+        :meta abstract:
         """
         return {}
 
     def load(self, state: dict) -> bool:
         """
-        Override to load any saved additional values from the entry state (as saved in save())
-        :param state: representation of saved additional values to load
-        :return: bool: whether setting state succeeded
+        Override this method to load the saved additional values and restore the entry state.
+
+        The received ``state`` is the same as the dictionary returned by the :py:meth:`save`
+        method (an empty dictionary if not overridden).
+
+        Use this method to use the saved values to restore the entry to the desired state.
+
+        Parameters
+        ----------
+        state : dict
+            Saved additional values by :py:meth:`save`
+
+        Returns
+        -------
+        bool
+            Whether the method executed successfully
         """
         return True
 
     def get_state(self) -> dict:
         """
-        Get the state of the entry as a dictionary
-        :return: dict: representation of the entry state
+        Get the state of this entry as a (JSON-safe) dictionary.
+
+        The dictionary contains:
+
+        - ``socket``: state of the entry socket
+        - ``custom``: additional values saved through the :py:meth:`save` method
+
+        Returns
+        -------
+        dict
+            JSON-safe dictionary representing entry state
         """
         return {
             'socket': None if self.socket is None else self.socket.get_state(),
@@ -348,10 +484,24 @@ class Entry(QObject, metaclass=ObjectMeta):
 
     def set_state(self, state: dict, restore_id: bool = True) -> bool:
         """
-        Set the state of the entry from a dictionary
-        :param state: representation of the entry state
-        :param restore_id: whether to restore the object id from state
-        :return: bool: whether setting state succeeded
+        Set the state of this entry from a state dictionary.
+
+        The dictionary contains:
+
+        - ``socket``: state of the entry socket
+        - ``custom``: additional values saved through the :py:meth:`save` method
+
+        Parameters
+        ----------
+        state : dict
+            Dictionary representation of the desired entry state
+        restore_id : bool
+            Whether to restore the internal IDs of the entry sockets (used to reconnect saved edges)
+
+        Returns
+        -------
+        bool
+            Whether setting the entry state succeeded
         """
         # Call custom function that could be overloaded by derived classes
         result = self.load(state.get('custom', {}))
