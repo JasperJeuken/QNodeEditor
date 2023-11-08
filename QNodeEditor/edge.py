@@ -1,4 +1,10 @@
-"""Edge container storing start+end and other edge properties"""
+"""
+Edge consisting of a connection between a start and end point
+
+This module contains a class derived from QObject. The object contains a start and end socket that
+determine the shape of the edge. Contains a graphics object that exists in a
+:py:class:`~.scene.NodeScene`.
+"""
 # pylint: disable = no-name-in-module
 from typing import Optional, TYPE_CHECKING
 
@@ -14,8 +20,32 @@ if TYPE_CHECKING:
 
 
 class Edge(QObject, metaclass=ObjectMeta):
-    """Class housing all elements of a connection between sockets"""
-
+    """
+    Edge container holding a start and end socket, and various utility methods.
+    
+    This class represents a connection between two sockets. It is also possible for only one end of
+    the edge to be connected to a socket.
+    
+    Edges can only connect an input to an output, or vice versa. It is not possible to connect two
+    inputs or two outputs together.
+    
+    In general, it is not necessary to instantiate this class since it is handled by the node editor
+    itself. However, in case you want to set the state of a node editor before opening it, this
+    class can be used to already connect nodes in your scene.
+    
+    Examples
+    --------
+    To define an edge that connects two nodes:
+    
+    .. code-block:: python
+        
+        node1 = SomeNode()     # Node containing the output entry 'Output'
+        node2 = AnotherNode()  # Node containing the input entry 'Value'
+        
+        edge = Edge(node1['Output'], node2['Value'])
+        
+    This adds an edge to the :py:class:`~.scene.NodeScene` the nodes are part of.
+    """
     # Create edge signals
     start_changed: pyqtSignal = pyqtSignal()
     end_changed: pyqtSignal = pyqtSignal()
@@ -27,11 +57,20 @@ class Edge(QObject, metaclass=ObjectMeta):
                  scene: Optional['NodeScene'] = None,
                  theme: ThemeType = DarkTheme):
         """
-        Create a new edge with a start and end with a specific line type
-        :param start: start socket (or entry with start socket)
-        :param end: end socket (or entry with end socket)
-        :param scene: scene the edge should be part of
-        :param theme: theme to use for edge
+        Create a new edge.
+        
+        Parameters
+        ----------
+        start : :py:class:`~.socket.Socket` or :py:class:`~.entry.Entry`, optional
+            Start point of the edge (either a socket or an entry with a socket)
+        end : :py:class:`~.socket.Socket` or :py:class:`~.entry.Entry`, optional
+            End point of the edge (either a socket or an entry with a socket)
+        scene : :py:class:`~.scene.NodeScene`, optional
+            Scene to place the edge in. In general, this argument is not needed and the scene is
+            deduced from the start and end sockets. If neither are provided, this argument is
+            required.
+        theme : Type[:py:class:`~QNodeEditor.themes.theme.Theme`], optional
+            Theme for the edge (default: :py:class:`~QNodeEditor.themes.dark.DarkTheme`)
         """
         super().__init__()
         # Get socket if start or end is an Entry
@@ -83,27 +122,28 @@ class Edge(QObject, metaclass=ObjectMeta):
     @property
     def theme(self) -> ThemeType:
         """
-        Get the current edge theme
-        :return: ThemeType: edge theme
+        Get or set the theme of the edge.
         """
         return self._theme
 
     @theme.setter
     def theme(self, new_theme: ThemeType) -> None:
-        """
-        Set a new theme for the edge
-        :param new_theme: new edge theme
-        :return: None
-        """
         self._theme = new_theme
-        self.create_graphics()
+        self._create_graphics()
         self.graphics.theme = new_theme
         self.update_positions()
 
-    def create_graphics(self) -> None:
+    def _create_graphics(self) -> None:
         """
-        Create edge graphics based on the selected edge type
-        :return: None
+        Create a graphics object for the edge based on the edge type in the theme
+
+        The edge type defined in the edge :py:attr:`theme` can have the following values:
+        - ``'linear'``: direct, linear line connecting the start and end point
+        - ``'bezier'``: Bézier curve with automatic control points to create a smooth curve
+
+        Returns
+        -------
+            None
         """
         # Remove old edge graphics and remember the start and end positions (if it exists)
         if (hasattr(self, 'graphics') and hasattr(self, 'scene') and
@@ -137,18 +177,15 @@ class Edge(QObject, metaclass=ObjectMeta):
     @property
     def start(self) -> Optional[Socket]:
         """
-        Get the socket the edge starts in
-        :return: NodeScene: edge start socket
+        Get or set the start socket of the edge
+
+        Setting a new start node removes the edge from the old starting point (if it was set) and
+        connects the edge to the new start point.
         """
         return self._start
 
     @start.setter
     def start(self, new_start: Socket) -> None:
-        """
-        Set the start socket for the edge
-        :param new_start: new start socket
-        :return: None
-        """
         # Remove edge from old socket if present
         if self._start is not None:
             self._start.remove_edge(self)
@@ -168,18 +205,15 @@ class Edge(QObject, metaclass=ObjectMeta):
     @property
     def end(self) -> Optional[Socket]:
         """
-        Get the socket the edge ends in
-        :return: NodeScene: edge end socket
+        Get or set the end socket of the edge
+
+        Setting a new end node removes the edge from the old ending point (if it was set) and
+        connects the edge to the new end point.
         """
         return self._end
 
     @end.setter
     def end(self, new_end: Socket) -> None:
-        """
-        Set the end socket for the edge
-        :param new_end: new end socket
-        :return: None
-        """
         # Remove edge from old socket if present
         if self._end is not None:
             self._end.remove_edge(self)
@@ -199,18 +233,15 @@ class Edge(QObject, metaclass=ObjectMeta):
     @property
     def scene(self) -> 'NodeScene':
         """
-        Get the scene the edge is part of
-        :return: NodeScene: scene edge is in
+        Get or set the scene this edge is part of.
+
+        Setting a new scene removes the edge from the old scene (if it was set) and adds the edge to
+        the new scene.
         """
         return self._scene
 
     @scene.setter
     def scene(self, new_scene: 'NodeScene') -> None:
-        """
-        Set a new scene for the edge to be part of
-        :param new_scene: new scene to place edge in
-        :return: None
-        """
         self._scene = new_scene
 
         # Add edge graphics to the scene if not None
@@ -221,8 +252,14 @@ class Edge(QObject, metaclass=ObjectMeta):
 
     def update_positions(self) -> None:
         """
-        Update the positions of the start and end points
-        :return: None
+        Update the positions of the start and end points.
+
+        Used when a node is moved to read the new positions of the start and end sockets and update
+        them in the graphics of the edge.
+
+        Returns
+        -------
+            None
         """
         # Calculate start position
         if self.start is not None and self.start.entry.node is not None:
@@ -238,16 +275,22 @@ class Edge(QObject, metaclass=ObjectMeta):
 
     def remove_from_sockets(self) -> None:
         """
-        Remove the edge from the sockets it is connected to (if any)
-        :return: None
+        Remove the edge from the sockets it is connected to.
+
+        Returns
+        -------
+            None
         """
         self.start = None
         self.end = None
 
     def remove(self) -> None:
         """
-        Remove this edge from the scene
-        :return: None
+        Remove this edge from the scene (and from the sockets it is connected to)
+        .
+        Returns
+        -------
+            None
         """
         # Remove the edge from all sockets
         self.remove_from_sockets()
@@ -266,14 +309,26 @@ class Edge(QObject, metaclass=ObjectMeta):
     def __str__(self) -> str:
         """
         Get a string representation of the edge
-        :return: str: string representation of the edge
+
+        Returns
+        -------
+        str
+            Representation of the edge
         """
         return f"<Edge from '{self.start}' to '{self.end}'>"
 
     def get_state(self) -> dict:
         """
-        Get the state of the edge as a dictionary
-        :return: dict: representation of the edge state
+        Get the state of this edge as a (JSON-safe) dictionary.
+
+        The dictionary contains:
+        - ``start``: the ID of the start socket (or None if no start socket)
+        - ``end``: the ID of the end socket (or None if no end socket)
+
+        Returns
+        -------
+        dict
+            JSON-safe dictionary representing the edge state
         """
         return {
             'start': None if self.start is None else self.start.id,
@@ -282,10 +337,21 @@ class Edge(QObject, metaclass=ObjectMeta):
 
     def set_state(self, state: dict, lookup: dict[str, str] = None) -> bool:
         """
-        Set the state of the edge from a dictionary
-        :param state: representation of the edge state
-        :param lookup: lookup table for socket id in state and socket id in scene
-        :return: bool: whether setting state succeeded
+        Set the state of this edge from a state dictionary.
+
+        Parameters
+        ----------
+        state : dict
+            Dictionary representation of the desired edge state
+        lookup: dict[str, str], optional
+            Dictionary with mapping of state socket ID to actual socket ID. If the socket was
+            added from a state with `restore_id=True`, these two are equal. Otherwise, the socket
+            will take on a new unique ID, which will be the value in (key, value) pairs.
+
+        Returns
+        -------
+        bool
+            Whether setting the edge state succeeded
         """
         # Read start and end socket ids from state (convert to scene id using lookup table)
         start_id, end_id = state.get('start', None), state.get('end', None)

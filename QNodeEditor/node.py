@@ -2,7 +2,8 @@
 Node containing entries with widgets and sockets
 
 This module contains a class derived from QObject. The object contains a list of entries that make
-up the structure of the node and determine its look.
+up the structure of the node and determine its look. Contains a graphics object that exists in a
+:py:class:`~.scene.NodeScene`..
 """
 # pylint: disable = no-name-in-module
 from abc import abstractmethod
@@ -31,6 +32,8 @@ class Node(QObject, metaclass=ObjectMeta):
     - :py:meth:`evaluate`: To use the inputs and static widgets of the node to determine its outputs
     - :py:meth:`save`: To save any variables that are needed to restore the node state
     - :py:meth:`load`: To use any saved variables to restore the node to its desired state
+
+    From these, only the py:meth:`create` method is strictly required.
 
     Examples
     --------
@@ -869,7 +872,7 @@ class Node(QObject, metaclass=ObjectMeta):
 
     def get_state(self) -> dict:
         """
-        Get ths state of this node as a (JSON-safe) dictionary.
+        Get the state of this node as a (JSON-safe) dictionary.
 
         The dictionary contains:
         - ``code``: the unique code assigned to this node type
@@ -916,8 +919,8 @@ class Node(QObject, metaclass=ObjectMeta):
 
         Returns
         -------
-        dict
-            JSON-safe dictionary representing the node state
+        bool
+            Whether setting the node state succeeded
 
         Raises
         ------
