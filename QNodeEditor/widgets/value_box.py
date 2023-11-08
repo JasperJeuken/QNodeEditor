@@ -1,4 +1,6 @@
-"""Custom value box for number inputs with slide controls and line edit input"""
+"""
+Module containing custom value box for number inputs with slide controls and line edit input
+"""
 # pylint: disable = no-name-in-module, C0103
 from typing import Optional, Type
 from functools import partial
@@ -14,16 +16,28 @@ from QNodeEditor.themes import ThemeType, DarkTheme
 
 class PopupLineEdit(QLineEdit):
     """
-    Line edit that closes when it loses focus
+    Line edit that closes when it loses focus.
+
+    This class should not be used. It is automatically instantiated in a :py:class:`ValueBox`.
     """
 
     closed: pyqtSignal = pyqtSignal()
+    """pyqtSignal: Signal that is emitted when the line edit has closed"""
 
     def focusOutEvent(self, event: Optional[QFocusEvent]) -> None:
         """
-        Close the widget if it loses focus
-        :param event: focus event
-        :return: None
+        Close the line edit when it loses focus.
+
+        Parameters
+        ----------
+        event : QFocusEvent or None
+            Event with focus out information
+
+        Returns
+        -------
+            None
+
+        :meta private:
         """
         self.closed.emit()
         self.close()
@@ -31,9 +45,18 @@ class PopupLineEdit(QLineEdit):
 
     def keyPressEvent(self, event: Optional[QKeyEvent]) -> None:
         """
-        Close the widget if "Enter" or "Escape" is pressed
-        :param event: key event
-        :return: None
+        Close the line edit if ``Enter`` or ``Escape`` is pressed.
+
+        Parameters
+        ----------
+        event QKeyEvent or None
+            Event with key press information
+
+        Returns
+        -------
+            None
+
+        :meta private:
         """
         if event.key() == Qt.Key_Escape or event.key() == Qt.Key_Return:
             self.closed.emit()
@@ -43,22 +66,51 @@ class PopupLineEdit(QLineEdit):
 
 
 class ValueBox(QWidget):
-    """Widget with a numerical value that allows dragging or line edit update"""
+    """
+    Widget with a numerical value that allows dragging or line edit updating.
 
+    The value box by default is divided into three sections. The middle section shows the name and
+    value of the box, the outer sections are increment/decrement buttons.
+
+    If the user clicks and drags from the center section, the value will increase/decrease if the
+    user moves the mouse to the right/left respectively. Holding ``Shift`` will change the value in
+    smaller steps, while holding ``Ctrl`` results in larger steps.
+
+    If the user clicks on the value box, a line edit is shown for entering a custom value with the
+    keyboard. The line edit closes when it loses focus or ``Enter``/``Return`` is pressed.
+
+    The value box can have a minimum and/or maximum value. If both are set, the increment/decrement
+    buttons are hidden and the value box acts as a progress bar, showing at what percentage of the
+    range between minimum and maximum the current value is.
+    """
+
+    # Create value box signals
     value_changed: pyqtSignal = pyqtSignal(int or float)
+    """pyqtSignal -> int or float: Signal that emits the box value if it changed"""
     editing: pyqtSignal = pyqtSignal(bool)
+    """pyqtSignal -> bool: Signal that emits when the user starts/stops editing the line edit"""
 
+    # Create value box value types
     TYPE_INT: int = 0
+    """int: Attribute indicating this value box holds an integer"""
     TYPE_FLOAT: int = 1
+    """int: Attribute indicating this value box holds a float"""
 
     def __init__(self, name: str = '', value_type: int = TYPE_INT,
                  parent: QWidget = None, theme: ThemeType = DarkTheme):
         """
-        Initialise box
-        :param name: value name
-        :param value_type: type of the value box (0: integer, 1: float)
-        :param parent: parent widget
-        :param theme: theme to use for this widget
+        Create a new value box.
+
+        Parameters
+        ----------
+        name : str, optional
+            Name of the value box
+        value_type : int, optional
+            Type of value (:py:attr:`TYPE_INT` or :py:attr:`TYPE_FLOAT`)
+        parent : QWidget, optional
+            Parent widget (if any)
+        theme : Type[:py:class:`~QNodeEditor.themes.theme.Theme`], optional
+            Theme for the value box (default: :py:class:`~QNodeEditor.themes.dark.DarkTheme`)
         """
         super().__init__(parent)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
@@ -105,8 +157,13 @@ class ValueBox(QWidget):
 
     def _add_buttons(self) -> None:
         """
-        Add increase, decrease and center buttons to the widget
-        :return: None
+        Add increase, decrease, and center buttons to the widget.
+
+        Also adds second page with only a label (used when an input socket is connected to an edge).
+
+        Returns
+        -------
+            None
         """
         # Create a stacked layout for the widget
         self.setLayout(QStackedLayout())
@@ -176,8 +233,11 @@ class ValueBox(QWidget):
 
     def _update_button_style(self) -> None:
         """
-        Update the button style based on current value and settings
-        :return: None
+        Update the value box style based on the current value and theme.
+
+        Returns
+        -------
+            None
         """
         # Determine button background colors in the case no range is set
         bg_decr, bg_cent, bg_incr = self._get_background_colors()
@@ -253,9 +313,13 @@ class ValueBox(QWidget):
 
     def _get_background_colors(self) -> tuple[str, str, str]:
         """
-        Get the background color for the center and increase/decrease buttons for the case in which
-        the minimum/maximum range is not set (no gradient)
-        :return: tuple[str, str, str]: (decrease, center, increase) button colors
+        Get the background colors for the decrease, center, and increase buttons based on the
+        value box state.
+
+        Returns
+        -------
+        tuple[str, str, str]
+            Colors of the (decrease, center, increase) buttons
         """
         # Determine flat background color
         if self._pressed is not None:
@@ -275,11 +339,22 @@ class ValueBox(QWidget):
     def _set_colors(self, color_main: str, color_side: str,
                     button: QPushButton or None) -> tuple[str, str, str]:
         """
-        Assign the main and side colors based on the selected button
-        :param color_main: color for specified button
-        :param color_side: color for other buttons
-        :param button: button to take main color
-        :return: tuple[str, str, str]: (decrease, center, increase) button colors
+        Assign the primary and secondary colors to the decrease, center, and increase buttons based
+        on the value box state.
+
+        Parameters
+        ----------
+        color_main : str
+            Color hex code for the primary button
+        color_side : str
+            Color hex code for the secondary button
+        button : QPushButton or None
+            Button that should take the primary color
+
+        Returns
+        -------
+        tuple[str, str, str]
+            Colors of the (decrease, center, increase) buttons
         """
         decrease, center, increase = color_side, color_side, color_side
         if button == self.buttons['decrease']:
@@ -292,8 +367,13 @@ class ValueBox(QWidget):
 
     def _create_gradient(self) -> str:
         """
-        Create a linear gradient representing the fraction of the current value in the range
-        :return: str: linear gradient for style sheet
+        Create a linear gradient that represents the percentage in the range between minimum and
+        maximum of the current value.
+
+        Returns
+        -------
+        str
+            CSS text for a qlineargradient with the desired gradient
         """
         # Calculate fraction of value in min-max range
         fraction_start = self._calculate_fraction()
@@ -313,8 +393,11 @@ class ValueBox(QWidget):
 
     def _add_field(self) -> None:
         """
-        Add underlying text field to the widget
-        :return: None
+        Add the underlying text field for the widget that holds the current value.
+
+        Returns
+        -------
+            None
         """
         self.field.setVisible(False)
         self.field.setFocusProxy(self)
@@ -333,27 +416,52 @@ class ValueBox(QWidget):
 
     def enterEvent(self, event: QEnterEvent) -> None:
         """
-        Change box style when mouse enters value box
-        :param event: mouse enter event
-        :return: None
+        Change the box style when the mouse hovers over it.
+
+        Parameters
+        ----------
+        event : QEnterEvent
+            Mouse enter event
+
+        Returns
+        -------
+            None
+
+        :meta private:
         """
         self._hovered = self._get_hovered(event.globalPos())
         self._update_button_style()
 
     def leaveEvent(self, _) -> None:
         """
-        Change box style when mouse leaves value box
-        :return: None
+        Change the box style when the mouse stops hovering over it.
+
+        Returns
+        -------
+            None
+
+        :meta private:
         """
         self._hovered = None
         self._update_button_style()
 
     def eventFilter(self, obj: Optional[QObject], event: Optional[QEvent]) -> bool:
         """
-        Intercept events fired
-        :param obj: object associated with event
-        :param event: event to handle
-        :return: bool: whether the event was handled
+        Handle mouse button presses and movements.
+
+        Parameters
+        ----------
+        obj : QObject or None
+            Object the event was generated in (in this case: self)
+        event : QEvent or None
+            Event to be handled
+
+        Returns
+        -------
+        bool
+            Whether event was handled
+
+        :meta private:
         """
         if event.type() == QEvent.MouseButtonPress:
             return self._handle_mouse_press(obj, event)
@@ -365,10 +473,19 @@ class ValueBox(QWidget):
 
     def _handle_mouse_press(self, obj: Optional[QObject], event: Optional[QMouseEvent]) -> bool:
         """
-        Handle mouse press event
-        :param obj: object associated with mouse press
-        :param event: mouse press event
-        :return: bool: whether the event was handled
+        Handle mouse button press.
+
+        Parameters
+        ----------
+        obj : QObject or None
+            Object associated with button press
+        event : QMouseEvent or None
+            Mouse press event
+
+        Returns
+        -------
+        bool
+            Whether the event was handled
         """
         if event.buttons() == Qt.LeftButton:
             self._hovered = self._get_hovered(event.globalPos())
@@ -389,10 +506,19 @@ class ValueBox(QWidget):
 
     def _handle_mouse_release(self, obj: Optional[QObject], event: Optional[QMouseEvent]) -> bool:
         """
-        Handle mouse release event
-        :param obj: object associated with mouse release
-        :param event: mouse release event
-        :return: bool: whether the event was handled
+        Handle mouse button release.
+
+        Parameters
+        ----------
+        obj : QObject or None
+            Object associated with button release
+        event : QMouseEvent or None
+            Mouse release event
+
+        Returns
+        -------
+        bool
+            Whether the event was handled
         """
         if event.button() == Qt.LeftButton:
             self._pressed = None
@@ -427,10 +553,19 @@ class ValueBox(QWidget):
 
     def _handle_mouse_move(self, obj: Optional[QObject], event: Optional[QMouseEvent]) -> bool:
         """
-        Handle mouse move event
-        :param obj: object associated with mouse move
-        :param event: mouse move event
-        :return: bool: whether the event was handled
+        Handle mouse movement.
+
+        Parameters
+        ----------
+        obj : QObject or None
+            Object associated with movement
+        event : QMouseEvent or None
+            Mouse movement event
+
+        Returns
+        -------
+        bool
+            Whether the event was handled
         """
         self._hovered = self._get_hovered(event.globalPos())
         self._update_button_style()
@@ -455,8 +590,12 @@ class ValueBox(QWidget):
 
     def _get_modified_step(self) -> int or float:
         """
-        Get the step size modified by the event
-        :return: int or float: value step size
+        Get the step size of the value changed based on the ``Shift`` or ``Ctrl`` modifier.
+
+        Returns
+        -------
+        int or float
+            Value step size (type depends on value box type)
         """
         # Determine step multiplier
         modifiers = QApplication.keyboardModifiers()
@@ -476,16 +615,28 @@ class ValueBox(QWidget):
 
     def _calculate_fraction(self) -> float:
         """
-        Calculate the fraction the value in the range min-max
-        :return: float: fraction of range
+        Calculate the percentage in the range between minimum and maximum of the current value.
+
+        Returns
+        -------
+        float
+            Fraction of range [0,1]
         """
         return (self.value - self.minimum) / (self.maximum - self.minimum)
 
     def _get_hovered(self, mouse_position: QPoint) -> QPushButton or None:
         """
-        Get the button that is being hovered over (or None if none hovered)
-        :param mouse_position: position of the mouse (global)
-        :return: QPushButton or None: hovered button (or None if none hovered)
+        Get the button that is being hovered over (if any).
+
+        Parameters
+        ----------
+        mouse_position : QPoint
+            Global mouse position
+
+        Returns
+        -------
+        QPushButton or None
+            Hovered button (or None if no button is hovered)
         """
         decrease, center, increase = self.buttons.values()
         if center.rect().contains(center.mapFromGlobal(mouse_position)):
@@ -498,16 +649,22 @@ class ValueBox(QWidget):
 
     def increment(self) -> None:
         """
-        Increment the value by one step (modified by Shift/Ctrl)
-        :return: None
+        Increment the value by one step (modified by ``Shift``/``Ctrl``)
+
+        Returns
+        -------
+            None
         """
         step = self._get_modified_step()
         self.value = self.value + step
 
     def decrement(self) -> None:
         """
-        Decrement the value by one step (modified by Shift/Ctrl)
-        :return: None
+        Decrement the value by one step (modified by ``Shift``/``Ctrl``)
+
+        Returns
+        -------
+            None
         """
         step = self._get_modified_step()
         self.value = self.value - step
@@ -515,18 +672,12 @@ class ValueBox(QWidget):
     @property
     def name(self) -> str:
         """
-        Getter for box name
-        :return: str: box name
+        Get or set the value box name.
         """
         return self._name
 
     @name.setter
     def name(self, new_name: str) -> None:
-        """
-        Setter for box name
-        :param new_name: new box name
-        :return: None
-        """
         self._name = new_name
         label = self._get_name_label()
         label.setText(new_name)
@@ -535,18 +686,15 @@ class ValueBox(QWidget):
     @property
     def minimum(self) -> int or float:
         """
-        Getter for box minimum value
-        :return: box minimum value
+        Get or set the minimum value of the box.
+
+        If the current value is lower than the new minimum, the value will be set to the new
+        minimum.
         """
         return self._minimum
 
     @minimum.setter
     def minimum(self, new_minimum: int or float or None) -> None:
-        """
-        Setter for box minimum value
-        :param new_minimum: new box minimum value
-        :return: None
-        """
         # Update internal variable
         self._minimum = self._type_check_value(new_minimum)
 
@@ -563,18 +711,15 @@ class ValueBox(QWidget):
     @property
     def maximum(self) -> int or float:
         """
-        Getter for box maximum value
-        :return: box maximum value
+        Get or set the maximum value of the box.
+
+        If the current value is lower than the new maximum, the value will be set to the new
+        maximum.
         """
         return self._maximum
 
     @maximum.setter
     def maximum(self, new_maximum: int or float or None) -> None:
-        """
-        Setter for box maximum value
-        :param new_maximum: new box maximum value
-        :return: None
-        """
         # Update internal variable
         self._maximum = self._type_check_value(new_maximum)
 
@@ -591,18 +736,12 @@ class ValueBox(QWidget):
     @property
     def value_type(self) -> int:
         """
-        Getter for box value type
-        :return: int: value type (0: int, 1: float)
+        Get or set the type of value in the box (``int`` or ``float``)
         """
         return self._value_type
 
     @value_type.setter
     def value_type(self, new_value_type: int or Type) -> None:
-        """
-        Setter for box value type
-        :param new_value_type: new value type (0: int, 1: float, or type itself)
-        :return: None
-        """
         if new_value_type == int:
             new_value_type = self.TYPE_INT
         elif new_value_type == float:
@@ -632,9 +771,17 @@ class ValueBox(QWidget):
 
     def _type_check_value(self, value: int or float or None) -> int or float or None:
         """
-        Ensures the provided value is the same as the value box type (or None)
-        :param value: value to type check
-        :return: int or float or None: value with type corresponding to value box type (or None)
+        Modify a value such that it is of the same type as the value box.
+
+        Parameters
+        ----------
+        value : int or float or None
+            Value to type check
+
+        Returns
+        -------
+        int or float or None
+            ``value`` with same type as value box (or None if None was provided as ``value``)
         """
         if value is None:
             return value
@@ -646,10 +793,18 @@ class ValueBox(QWidget):
 
     def set_range(self, minimum: int or float, maximum: int or float) -> None:
         """
-        Set the minimum and maximum value
-        :param minimum: minimum value
-        :param maximum: maximum value
-        :return: None
+        Set the minimum and maximum value of the value box.
+
+        Parameters
+        ----------
+        minimum : int or float
+            New minimum value
+        maximum : int or float
+            New maximum value
+
+        Returns
+        -------
+            None
         """
         self.minimum = minimum
         self.maximum = maximum
@@ -657,18 +812,12 @@ class ValueBox(QWidget):
     @property
     def step(self) -> int or float:
         """
-        Getter for value step size
-        :return: int or float: step size
+        Get or set the value step size
         """
         return self._step
 
     @step.setter
     def step(self, new_step: int or float) -> None:
-        """
-        Setter for value step size
-        :param new_step: new step size
-        :return: None
-        """
         # Ensure step size is of correct type
         if self.value_type == self.TYPE_INT:
             new_step = int(new_step)
@@ -683,8 +832,9 @@ class ValueBox(QWidget):
     @property
     def value(self) -> int or float:
         """
-        Getter for the box value
-        :return: int or float: box value
+        Get or set the current value.
+
+        Provided values will be forced within minimum-maximum range.
         """
         if self.value_type == self.TYPE_INT:
             return int(self.field.text())
@@ -694,11 +844,6 @@ class ValueBox(QWidget):
 
     @value.setter
     def value(self, new_value: int or float) -> None:
-        """
-        Setter for box value
-        :param new_value: new box value
-        :return: None
-        """
         # Ensure value is in value range
         if self.minimum is not None:
             new_value = max(new_value, self.minimum)
@@ -723,9 +868,16 @@ class ValueBox(QWidget):
 
     def set_height(self, height: int) -> None:
         """
-        Set the widget height
-        :param height: widget height to use
-        :return: None
+        Set the fixed height of the value box.
+
+        Parameters
+        ----------
+        height : int
+            Fixed height for the value box
+
+        Returns
+        -------
+            None
         """
         for button in self.buttons.values():
             button.setFixedHeight(height)
@@ -733,9 +885,18 @@ class ValueBox(QWidget):
 
     def _set_button_visibility(self, visible: bool) -> None:
         """
-        Show/hide the increment/decrement buttons
-        :param visible: whether to show buttons
-        :return: None
+        Show/hide the increment/decrement buttons.
+
+        Used to hide buttons when both minimum and maximum are set.
+
+        Parameters
+        ----------
+        visible : bool
+            Whether buttons should be visible
+
+        Returns
+        -------
+            None
         """
         self.buttons['decrease'].setVisible(visible)
         self.buttons['increase'].setVisible(visible)
@@ -760,9 +921,16 @@ class ValueBox(QWidget):
 
     def _update_cursor_shape(self, dragging: bool = False) -> None:
         """
-        Set the cursor shape for the center button based on the current state
-        :param dragging: whether the user is currently dragging
-        :return: None
+        Update the shape of the cursor based on the value box state.
+
+        Parameters
+        ----------
+        dragging : bool
+            Whether the user is dragging the value
+
+        Returns
+        -------
+            None
         """
         QApplication.restoreOverrideCursor()
         if dragging:
@@ -775,24 +943,35 @@ class ValueBox(QWidget):
 
     def _get_width(self) -> int:
         """
-        Calculate the width of the value box (excluding content margins)
-        :return: int: value box width
+        Get the width of the value box (excluding content margins)
+
+        Returns
+        -------
+        int
+            Value box width
         """
         margins = self.contentsMargins()
         return self.width() - margins.left() - margins.right()
 
     def _get_height(self) -> int:
         """
-        Calculate the height of the value box (excluding content margins)
-        :return: int: value box height
+        Get the height of the value box (excluding content margins)
+
+        Returns
+        -------
+        int
+            Value box height
         """
         margins = self.contentsMargins()
         return self.height() - margins.top() - margins.bottom()
 
     def _show_field(self) -> None:
         """
-        Show the text field for editing value
-        :return: None
+        Show the popup line edit for entering custom values with the keyboard.
+
+        Returns
+        -------
+            None
         """
         def _update_value(new_text: str):
             try:
@@ -854,25 +1033,18 @@ class ValueBox(QWidget):
         temp_field.closed.connect(partial(self.editing.emit, False))
         temp_field.textChanged.connect(_update_value)
 
-    def _hide_field(self) -> None:
-        """
-        Hide underlying text field
-        :return: None
-        """
-        self.field.setVisible(False)
-
-    def _field_visible(self) -> bool:
-        """
-        Checks whether the underlying text field is visible
-        :return: bool: whether field is visible
-        """
-        return self.field.isVisible()
-
     def _field_changed(self, new_text: str) -> None:
         """
-        Update value label and emit signal on value change
-        :param new_text: new value (as string)
-        :return: None
+        Update the value label if the text field changed.
+
+        Parameters
+        ----------
+        new_text : str
+            String containing new value for the box
+
+        Returns
+        -------
+            None
         """
         # Get int or float from text based on value type
         if self.value_type == self.TYPE_INT:
@@ -894,8 +1066,17 @@ class ValueBox(QWidget):
 
     def _get_value_label(self) -> QLabel:
         """
-        Get the label that displays the value
-        :return: QLabel: value display label
+        Get the label that is displaying the value in the center button.
+
+        Returns
+        -------
+        QLabel
+            Value label
+
+        Raises
+        ------
+        ValueError
+            If the label could not be found
         """
         for i in reversed(range(self.buttons['center'].layout().count())):
             widget = self.buttons['center'].layout().itemAt(i).widget()
@@ -905,8 +1086,17 @@ class ValueBox(QWidget):
 
     def _get_name_label(self) -> QLabel:
         """
-        Get the label that displays the name
-        :return: QLabel: name display label
+        Get the label that is displaying the name in the center button
+
+        Returns
+        -------
+        QLabel
+            Name label
+
+        Raises
+        ------
+        ValueError
+            If the label could not be found
         """
         for i in range(self.buttons['center'].layout().count()):
             widget = self.buttons['center'].layout().itemAt(i).widget()
@@ -917,27 +1107,28 @@ class ValueBox(QWidget):
     @property
     def theme(self) -> ThemeType:
         """
-        Gets the current theme
-        :return: ThemeType: current theme
+        Get or set the value box theme.
         """
         return self._theme
 
     @theme.setter
     def theme(self, new_theme: ThemeType) -> None:
-        """
-        Set a new theme
-        :param new_theme: new theme
-        :return: None
-        """
         self._theme = new_theme
         self.set_height(new_theme.widget_height)
         self._update_button_style()
 
     def set_label_only(self, label_only: bool) -> None:
         """
-        Hide value box buttons and only show name label
-        :param label_only: whether to only show name label
-        :return: None
+        Hide/show the value box and hide/show only the name label instead.
+
+        Parameters
+        ----------
+        label_only : bool
+            Whether to only show the name label
+
+        Returns
+        -------
+            None
         """
         layout: QStackedLayout = self.layout()
         if label_only:
