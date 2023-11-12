@@ -547,6 +547,9 @@ class NodeScene(QObject, metaclass=ObjectMeta):
         -------
             None
         """
+        # Disable view while calculating
+        self._disable_view(True)
+
         # Create a QThread and place a worker on it
         self._thread = QThread()
         self._worker = Worker()
@@ -577,6 +580,25 @@ class NodeScene(QObject, metaclass=ObjectMeta):
         self._thread.wait()
         self._worker.deleteLater()
         self._thread.deleteLater()
+
+        # Enable view
+        self._disable_view(False)
+
+    def _disable_view(self, disabled: bool) -> None:
+        """
+        Enable/disable the :py:class:`~.graphics.view.NodeView` (during scene evaluation).
+
+        Parameters
+        ----------
+        disabled : bool
+            Whether the view should be disabled
+
+        Returns
+        -------
+            None
+        """
+        for view in self.graphics.views():
+            view.setDisabled(disabled)
 
     def _digraph(self) -> DiGraph:
         """

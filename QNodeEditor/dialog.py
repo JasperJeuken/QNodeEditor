@@ -121,9 +121,6 @@ class NodeEditorDialog(QDialog):
         -------
             None
         """
-        # Disable the node editor
-        self.editor.view.setDisabled(True)
-
         # Show a label in the status layout
         self._clear_status()
         self._status_layout.addWidget(QLabel('Evaluating node scene...'))
@@ -153,7 +150,6 @@ class NodeEditorDialog(QDialog):
         self._state = self.editor.scene.get_state()
         self._clear_status()
         self.accept()
-        self.editor.view.setDisabled(False)
 
     def _handle_error(self, error: Exception) -> None:
         """
@@ -194,9 +190,7 @@ class NodeEditorDialog(QDialog):
         details_button = QPushButton('Details')
         details_button.clicked.connect(details_dialog.exec)
         self._status_layout.addWidget(details_button)
-
         self._status_layout.addStretch()
-        self.editor.view.setDisabled(False)
 
     def _clear_status(self) -> None:
         """
