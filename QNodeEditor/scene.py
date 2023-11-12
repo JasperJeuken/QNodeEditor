@@ -11,7 +11,7 @@ from functools import partial
 
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtCore import QObject, QThread, pyqtSignal
-from networkx import DiGraph, find_cycle, NetworkXNoCycle
+from networkx import DiGraph, find_cycle, NetworkXNoCycle, has_path
 
 from QNodeEditor.graphics.scene import NodeSceneGraphics
 from QNodeEditor.graphics.view import NodeView
@@ -72,6 +72,8 @@ class NodeScene(QObject, metaclass=ObjectMeta):
     """pyqtSignal -> dict: Signal that emits a dictionary with the result of evaluating the scene"""
     errored: pyqtSignal = pyqtSignal(Exception)
     """pyqtSignal -> Exception: Signal that emits the error if once occurs during evaluation"""
+    progress: pyqtSignal = pyqtSignal()
+    """pyqtSignal -> Signal that is emitted when a node has been evaluated"""
 
     # Create scene thread reference
     _thread: QThread = None
@@ -101,7 +103,6 @@ class NodeScene(QObject, metaclass=ObjectMeta):
         # Create scene management
         self.clipboard: Clipboard = Clipboard(self)
         self.output_node: Optional[Type[Node]] = None
-        self.has_cycles: bool = False
 
     def add_node(self, node: 'Node') -> None:
         """
@@ -119,7 +120,6 @@ class NodeScene(QObject, metaclass=ObjectMeta):
         self.nodes.append(node)
         self.graphics.addItem(node.graphics)
         node.scene = self
-        self.has_cycles = self._check_cycles()
 
     def add_nodes(self, nodes: Iterable['Node']) -> None:
         """
@@ -154,7 +154,6 @@ class NodeScene(QObject, metaclass=ObjectMeta):
         """
         if node in self.nodes:
             self.nodes.remove(node)
-            self.has_cycles = self._check_cycles()
 
     def clear(self) -> None:
         """
@@ -166,7 +165,6 @@ class NodeScene(QObject, metaclass=ObjectMeta):
         """
         while len(self.nodes) > 0:
             self.nodes[0].remove()
-        self.has_cycles = self._check_cycles()
 
     def set_editing_flag(self, editing: bool) -> None:
         """
@@ -533,7 +531,7 @@ class NodeScene(QObject, metaclass=ObjectMeta):
             raise ValueError('There are multiple output nodes in the scene')
         return output_nodes[0]
 
-    def evaluate(self) -> None:
+    def evaluate(self) -> int:
         """
         Evaluate the scene by traversing the nodes and their connections.
 
@@ -545,8 +543,16 @@ class NodeScene(QObject, metaclass=ObjectMeta):
 
         Returns
         -------
-            None
+        int
+            Number of nodes that will be evaluated asynchronously
         """
+        # Count the number of nodes that have to be evaluated
+        n_nodes = len(self.simplified_digraph().nodes) - 1
+
+        # Connect node evaluation signals
+        for node in self.nodes:
+            node.evaluated.connect(self.progress.emit)
+
         # Disable view while calculating
         self._disable_view(True)
 
@@ -563,6 +569,7 @@ class NodeScene(QObject, metaclass=ObjectMeta):
 
         # Move worker to thread and start it
         self._thread.start()
+        return n_nodes
 
     def _handle_done(self) -> None:
         """
@@ -600,7 +607,7 @@ class NodeScene(QObject, metaclass=ObjectMeta):
         for view in self.graphics.views():
             view.setDisabled(disabled)
 
-    def _digraph(self) -> DiGraph:
+    def digraph(self) -> DiGraph:
         """
         Create a directional graph that represents the node scene.
 
@@ -628,7 +635,36 @@ class NodeScene(QObject, metaclass=ObjectMeta):
                 graph.add_edge(id(edge.start.entry.node), id(edge.end.entry.node))
         return graph
 
-    def _check_cycles(self) -> bool:
+    def simplified_digraph(self) -> DiGraph:
+        """
+        Get a directional graph representing the scene with only nodes connected to the output.
+
+        This graph is used to determine how many nodes will have to be calculated during scene
+        evaluation.
+
+        Returns
+        -------
+        DiGraph
+            Directional graph object representing the nodes connected to the output node.
+        """
+        # Create graph from scene and find the output node
+        graph = self.digraph()
+        output = id(self.find_output_node())
+
+        # Create new graph with only nodes that connect to the output
+        simple_graph = DiGraph()
+        for node in graph.nodes:
+            if has_path(graph, node, output):
+                simple_graph.add_node(node)
+
+        # Add back the edges that are part of the simplified graph
+        for edge in graph.edges:
+            if simple_graph.has_node(edge[0]) and simple_graph.has_node(edge[1]):
+                simple_graph.add_edge(edge[0], edge[1])
+
+        return simple_graph
+
+    def has_cycles(self) -> bool:
         """
         Check if the nodes and edges in the scene form a cycle.
 
@@ -638,7 +674,7 @@ class NodeScene(QObject, metaclass=ObjectMeta):
             Whether a cycle is present in the node scene
         """
         try:
-            graph = self._digraph()
+            graph = self.digraph()
             find_cycle(graph)
             return True
         except NetworkXNoCycle:
@@ -749,7 +785,6 @@ class NodeScene(QObject, metaclass=ObjectMeta):
             edge = Edge(scene=self)
             result &= edge.set_state(edge_state, socket_lookup)
 
-        self.has_cycles = self._check_cycles()
         return result
 
 
@@ -793,7 +828,7 @@ class Worker(QObject):
         """
         try:
             # Prevent infinite recursion when cycles exist in the scene
-            if scene.has_cycles:
+            if scene.has_cycles():
                 raise ValueError('Cannot evaluate scene since there are cycles in the connections')
 
             # Rest all node outputs

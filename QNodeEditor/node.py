@@ -9,7 +9,7 @@ up the structure of the node and determine its look. Contains a graphics object 
 from abc import abstractmethod
 from typing import TYPE_CHECKING, Optional, Iterable, overload, Any, Type
 
-from PyQt5.QtCore import QObject
+from PyQt5.QtCore import QObject, pyqtSignal
 
 from QNodeEditor.entry import Entry
 from QNodeEditor.graphics.node import NodeGraphics
@@ -87,6 +87,9 @@ class Node(QObject, metaclass=ObjectMeta):
 
     code: int
     """int: Unique code that only one derived Node class can use"""
+
+    evaluated: pyqtSignal = pyqtSignal()
+    """pyqtSignal: Signal that is emitted when the node is evaluated"""
 
     def __init__(self, title: str = 'Node'):
         """
@@ -227,6 +230,7 @@ class Node(QObject, metaclass=ObjectMeta):
                                      f"'{self.title}' was not set")
                 outputs[entry.name] = entry.value
         self.output = outputs
+        self.evaluated.emit()
 
     def _reset_outputs(self) -> None:
         """
