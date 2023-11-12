@@ -9,7 +9,7 @@ import os
 from typing import Type, TYPE_CHECKING, overload
 
 from PyQt5.QtWidgets import QWidget, QVBoxLayout
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import pyqtSignal, Qt
 
 from QNodeEditor import NodeScene, NodeView
 from QNodeEditor.themes import ThemeType, DarkTheme
@@ -68,6 +68,7 @@ class NodeEditor(QWidget):
 
         # Set node editor theme
         self.theme: ThemeType = theme
+        self.view.setFocusPolicy(Qt.StrongFocus)
 
         # Pass through scene signals
         self.scene.evaluated.connect(self.evaluated.emit)
