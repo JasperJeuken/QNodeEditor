@@ -1,6 +1,6 @@
 # QNodeEditor
 
-![pylint](https://img.shields.io/badge/pylint-9.83-yellow?logo=python&logoColor=white)
+![pylint](https://img.shields.io/badge/pylint-9.82-yellow?logo=python&logoColor=white)
 [<img src="https://img.shields.io/badge/github--blue?logo=github" alt="Github badge">](https://github.com/JasperJeuken/QNodeEditor)
 [<img src="https://img.shields.io/badge/PyPi--blue?logo=pypi" alt="PyPi badge">](https://pypi.org/project/QNodeEditor/)
 [<img src="https://img.shields.io/badge/Documentation--blue?logo=readthedocs" alt="readthedocs badge">](https://qnodeeditor.readthedocs.io/en/latest/)
