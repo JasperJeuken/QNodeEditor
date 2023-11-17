@@ -2,13 +2,13 @@
 Module containing extension of QGraphicsView for node editor.
 """
 # pylint: disable = no-name-in-module, C0103
-from typing import Optional, Type
+from typing import Optional, Type, Iterable
 from math import sqrt
 from functools import partial
 
 from PyQt5.QtWidgets import QGraphicsView, QGraphicsItem, QMenu, QAction, QFrame
-from PyQt5.QtCore import Qt, QPoint
-from PyQt5.QtGui import QPainter, QMouseEvent, QWheelEvent, QKeyEvent, QCursor
+from PyQt5.QtCore import Qt, QPoint, QRectF
+from PyQt5.QtGui import QPainter, QMouseEvent, QWheelEvent, QKeyEvent, QCursor, QContextMenuEvent
 
 from QNodeEditor.node import Node
 from QNodeEditor.edge import Edge
@@ -73,6 +73,7 @@ class NodeView(QGraphicsView):
         self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
         self.setDragMode(QGraphicsView.RubberBandDrag)
         self.setAcceptDrops(True)
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
 
         # Set zoom tracking variables
         self._zoom_min: int = 5
@@ -256,6 +257,21 @@ class NodeView(QGraphicsView):
 
         # Use default handler otherwise
         super().keyPressEvent(event)
+
+    def contextMenuEvent(self, event: Optional[QContextMenuEvent]) -> None:
+        """
+        Open the custom context menu at the clicked position.
+
+        Parameters
+        ----------
+        event : QContextMenuEvent, optional
+            Context menu event
+
+        Returns
+        -------
+            None
+        """
+        self.create_context_menu(event.pos())
 
     def left_mouse_button_press(self, event: QMouseEvent) -> None:
         """
@@ -770,9 +786,9 @@ class NodeView(QGraphicsView):
         if isinstance(item, NodeGraphics):
             self._add_node_actions(context_menu, item)
             context_menu.addSeparator()
+            self._add_align_actions(context_menu)
         elif isinstance(item, SocketGraphics):
             self._add_socket_actions(context_menu, item)
-            context_menu.addSeparator()
 
         # Otherwise, add menu and actions for adding nodes, clipboard, and zooming
         else:
@@ -781,6 +797,8 @@ class NodeView(QGraphicsView):
             self._add_clipboard_actions(context_menu)
             context_menu.addSeparator()
             self._add_zoom_actions(context_menu)
+            context_menu.addSeparator()
+            self._add_align_actions(context_menu)
 
         # Show context menu at specified position
         context_menu.exec_(position)
@@ -947,6 +965,81 @@ class NodeView(QGraphicsView):
         # Add action to menu
         parent_menu.addAction(action_disconnect)
 
+    def _add_align_actions(self, parent_menu: QMenu) -> None:
+        """
+        Add a menu with alignment/spacing actions to a parent menu.
+
+        Parameters
+        ----------
+        parent_menu : QMenu
+            Parent menu
+
+        Returns
+        -------
+            None
+        """
+        # Create actions
+        action_align_horizontal_left = QAction('Horizontal left', parent_menu)
+        action_align_horizontal_center = QAction('Horizontal center', parent_menu)
+        action_align_horizontal_right = QAction('Horizontal right', parent_menu)
+        action_align_vertical_top = QAction('Vertical top', parent_menu)
+        action_align_vertical_center = QAction('Vertical center', parent_menu)
+        action_align_vertical_bottom = QAction('Vertical bottom', parent_menu)
+        action_spacing_equal_vertical = QAction('Equal vertically', parent_menu)
+        action_spacing_equal_horizontal = QAction('Equal horizontally', parent_menu)
+        action_spacing_compress_vertical = QAction('Compress vertically', parent_menu)
+        action_spacing_compress_horizontal = QAction('Compress horizontally', parent_menu)
+
+        # Connect align actions to function
+        action_align_horizontal_left.triggered.connect(partial(self.align_selection,
+                                                               Qt.Horizontal, Qt.AlignLeft))
+        action_align_horizontal_center.triggered.connect(partial(self.align_selection,
+                                                                 Qt.Horizontal, Qt.AlignCenter))
+        action_align_horizontal_right.triggered.connect(partial(self.align_selection,
+                                                                Qt.Horizontal, Qt.AlignRight))
+        action_align_vertical_top.triggered.connect(partial(self.align_selection,
+                                                            Qt.Vertical, Qt.AlignTop))
+        action_align_vertical_center.triggered.connect(partial(self.align_selection,
+                                                               Qt.Vertical, Qt.AlignCenter))
+        action_align_vertical_bottom.triggered.connect(partial(self.align_selection,
+                                                               Qt.Vertical, Qt.AlignBottom))
+
+        # Connect spacing actions to function
+        action_spacing_equal_horizontal.triggered.connect(partial(self.space_selection,
+                                                                  Qt.Horizontal, 'equal'))
+        action_spacing_equal_vertical.triggered.connect(partial(self.space_selection,
+                                                                Qt.Vertical, 'equal'))
+        action_spacing_compress_horizontal.triggered.connect(partial(self.space_selection,
+                                                                     Qt.Horizontal, 'compress'))
+        action_spacing_compress_vertical.triggered.connect(partial(self.space_selection,
+                                                                   Qt.Vertical, 'compress'))
+
+        # Add align actions to menu
+        align_menu = QMenu('Align', parent_menu)
+        align_menu.addActions([action_align_horizontal_left,
+                               action_align_horizontal_center,
+                               action_align_horizontal_right])
+        align_menu.addSeparator()
+        align_menu.addActions([action_align_vertical_top,
+                               action_align_vertical_center,
+                               action_align_vertical_bottom])
+        parent_menu.addMenu(align_menu)
+
+        # Add spacing actions to menu
+        spacing_menu = QMenu('Spacing', parent_menu)
+        spacing_menu.addActions([action_spacing_equal_horizontal,
+                                 action_spacing_compress_horizontal])
+        spacing_menu.addSeparator()
+        spacing_menu.addActions([action_spacing_equal_vertical,
+                                 action_spacing_compress_vertical])
+        parent_menu.addMenu(spacing_menu)
+
+        # Disable actions if no scene items are selected
+        if len([item for item in self.scene_graphics.selectedItems()
+                if isinstance(item, NodeGraphics)]) <= 1:
+            align_menu.setDisabled(True)
+            spacing_menu.setDisabled(True)
+
     def add_node(self, node_class: Type[Node]) -> None:
         """
         Start placing a node of the specified type.
@@ -1014,20 +1107,12 @@ class NodeView(QGraphicsView):
         :meta private:
         """
         # Calculate the coordinate of the center of the selected items
-        min_x, max_x = float('inf'), float('-inf')
-        min_y, max_y = float('inf'), float('-inf')
-        items = self.scene_graphics.selectedItems()
-        for item in items:
-            if isinstance(item, NodeGraphics):
-                x, y = item.pos().x(), item.pos().y()
-                min_x, max_x = min(min_x, x), max(max_x, x + item.width)
-                min_y, max_y = min(min_y, y), max(max_y, y + item.height)
-        center_x = (max_x - min_x) / 2 + min_x
-        center_y = (max_y - min_y) / 2 + min_y
+        bounding_rect = self._get_bounding_rect(self.scene_graphics.selectedItems())
 
         # Calculate offset and move all items by that much
-        offset_x, offset_y = position.x() - center_x, position.y() - center_y
-        for item in items:
+        offset_x, offset_y = position.x() - bounding_rect.center().x(),\
+            position.y() - bounding_rect.center().y()
+        for item in self.scene_graphics.selectedItems():
             if isinstance(item, NodeGraphics):
                 item.moveBy(offset_x, offset_y)
 
@@ -1054,6 +1139,156 @@ class NodeView(QGraphicsView):
         self.scene_graphics.scene.clipboard.add_state(selected_state)
         self.move_selection(self.mapToScene(self.mapFromGlobal(QCursor.pos())))
         self._state = self.STATE_PLACING
+
+    def align_selection(self, axis: Qt.Orientation = Qt.Horizontal,
+                        direction: Qt.Alignment = Qt.AlignLeft) -> None:
+        """
+        Align the currently selected items along an axis in the specified direction.
+
+        Specifying ``Qt.AlignHCenter`` or ``Qt.AlignVCenter`` will both default to center the items
+        along the specified axis (not for both).
+
+        Parameters
+        ----------
+        axis : Qt.Orientation
+            Axis to align on (``Qt.Horizontal`` or ``Qt.Vertical``)
+        direction : Qt.Alignment
+            Direction to align items in
+
+        Returns
+        -------
+            None
+
+        Raises
+        ------
+        ValueError
+            If no items are selected
+        """
+        # Use general center direction for HCenter and VCenter
+        if direction in (Qt.AlignHCenter, Qt.AlignVCenter):
+            direction = Qt.AlignCenter
+
+        # Ensure there are enough items to align
+        items = [item for item in self.scene_graphics.selectedItems()
+                 if isinstance(item, NodeGraphics)]
+        if len(items) == 0:
+            raise ValueError('No nodes selected, cannot align')
+
+        # Find the limits of the item positions and calculate the center point
+        bounding_rect = self._get_bounding_rect(items)
+
+        # Set the position of the items based on the specified settings
+        for item in items:
+            if isinstance(item, NodeGraphics):
+                # Horizontal alignment
+                if axis == Qt.Horizontal and direction == Qt.AlignLeft:
+                    item.setX(bounding_rect.left())
+                elif axis == Qt.Horizontal and direction == Qt.AlignCenter:
+                    item.setX(bounding_rect.center().x() - item.width / 2)
+                elif axis == Qt.Horizontal and direction == Qt.AlignRight:
+                    item.setX(bounding_rect.right() - item.width)
+
+                # Vertical alignment
+                elif axis == Qt.Vertical and direction == Qt.AlignTop:
+                    item.setY(bounding_rect.top())
+                elif axis == Qt.Vertical and direction == Qt.AlignCenter:
+                    item.setY(bounding_rect.center().y() - item.height / 2)
+                elif axis == Qt.Vertical and direction == Qt.AlignBottom:
+                    item.setY(bounding_rect.bottom() - item.height)
+
+                # Incorrect combination of axis and direction
+                else:
+                    directions = {
+                        Qt.AlignLeft: 'Left',
+                        Qt.AlignRight: 'Right',
+                        Qt.AlignTop: 'Top',
+                        Qt.AlignBottom: 'Bottom',
+                        Qt.AlignCenter: ' Center'
+                    }
+                    str_axis = 'Horizontal' if axis == Qt.Horizontal else 'Vertical'
+                    str_dir = directions[direction]
+                    raise ValueError(f"Cannot align '{str_dir}' in axis '{str_axis}'")
+
+    def space_selection(self, axis: Qt.Orientation = Qt.Vertical, distance: str = 'equal') -> None:
+        """
+        Space the currently selected items in the specified direction.
+
+        Distance can be:
+
+        - ``'equal'``: Equally space the items
+        - ``'compress'``: Remove the spacing between the items
+
+        Parameters
+        ----------
+        axis : Qt.Orientation
+            Axis to align on (``Qt.Horizontal`` or ``Qt.Vertical``)
+        distance : str
+            How to space items (``'equal'`` or ``'compress'``)
+
+        Returns
+        -------
+            None
+        """
+        # Ensure there are enough items to space
+        items: list[NodeGraphics] = [item for item in self.scene_graphics.selectedItems()
+                                     if isinstance(item, NodeGraphics)]
+        if len(items) <= 1:
+            raise ValueError('At least two nodes should be selected, cannot align')
+
+        # Get the bounding rectangle of the selected items and sort the nodes by position
+        bounding_rect = self._get_bounding_rect(items)
+        if axis == Qt.Horizontal:
+            items.sort(key=lambda item: item.x())
+        else:
+            items.sort(key=lambda item: item.y())
+
+        # Determine the spacing between nodes based on setting
+        if distance == 'equal':
+            node_width = sum([node.width for node in items])
+            node_height = sum([node.height for node in items])
+            spacing_x = (bounding_rect.right() - bounding_rect.left() - node_width) / \
+                        (len(items) - 1)
+            spacing_y = (bounding_rect.bottom() - bounding_rect.top() - node_height) / \
+                        (len(items) - 1)
+        else:
+            spacing_x = 10
+            spacing_y = 10
+
+        # Set node positions using spacing
+        x, y = bounding_rect.left(), bounding_rect.top()
+        for item in items:
+            if axis == Qt.Horizontal:
+                item.setX(x)
+            else:
+                item.setY(y)
+            x, y = x + spacing_x + item.width, y + spacing_y + item.height
+
+    @staticmethod
+    def _get_bounding_rect(items: Iterable[QGraphicsItem]) -> QRectF:
+        """
+        Get the bounding rectangle of a list of items.
+
+        Only :py:class:`~QNodeEditor.node.Node` instances are considered.
+
+        Parameters
+        ----------
+        items : Iterable[QGraphicsItem]
+            Items to get bounding rectangle of
+
+        Returns
+        -------
+        QRectF
+            Bounding rectangle of specified items
+        """
+        # Find the limits of the item positions
+        x_min, x_max = float('inf'), float('-inf')
+        y_min, y_max = float('inf'), float('-inf')
+        for item in items:
+            if isinstance(item, NodeGraphics):
+                x_min, x_max = min(x_min, item.x()), max(x_max, item.x() + item.width)
+                y_min, y_max = min(y_min, item.y()), max(y_max, item.y() + item.height)
+
+        return QRectF(x_min, y_min, x_max - x_min, y_max - y_min)
 
     def __str__(self) -> str:
         """

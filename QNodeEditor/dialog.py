@@ -8,9 +8,10 @@ succeeds. Any errors that occur are caught and displayed to the user.
 # pylint: disable = no-name-in-module
 from typing import Optional, Any
 import traceback
+from functools import partial
 
 from PyQt5.QtWidgets import (QDialog, QPushButton, QWidget, QHBoxLayout, QVBoxLayout, QLabel,
-                             QMessageBox, QTextEdit)
+                             QMessageBox, QTextEdit, QProgressBar)
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFontMetrics, QKeyEvent
 
@@ -121,15 +122,18 @@ class NodeEditorDialog(QDialog):
         -------
             None
         """
-        # Disable the node editor
-        self.editor.view.setDisabled(True)
-
         # Show a label in the status layout
         self._clear_status()
         self._status_layout.addWidget(QLabel('Evaluating node scene...'))
 
+        # Add a progress bar to the status layout
+        progress_bar = QProgressBar()
+        self.editor.scene.progress.connect(partial(self._update_progress, progress_bar))
+        self._status_layout.addWidget(progress_bar)
+
         # Start evaluation
-        self.editor.scene.evaluate()
+        n_nodes = self.editor.scene.evaluate()
+        progress_bar.setMaximum(n_nodes)
 
     def _handle_result(self, result: dict[str, Any]) -> None:
         """
@@ -152,8 +156,8 @@ class NodeEditorDialog(QDialog):
         # Accept the dialog (and enable node editor in case dialog is opened again)
         self._state = self.editor.scene.get_state()
         self._clear_status()
+        self._status_layout.addStretch()
         self.accept()
-        self.editor.view.setDisabled(False)
 
     def _handle_error(self, error: Exception) -> None:
         """
@@ -194,9 +198,23 @@ class NodeEditorDialog(QDialog):
         details_button = QPushButton('Details')
         details_button.clicked.connect(details_dialog.exec)
         self._status_layout.addWidget(details_button)
-
         self._status_layout.addStretch()
-        self.editor.view.setDisabled(False)
+
+    @staticmethod
+    def _update_progress(progress_bar: QProgressBar) -> None:
+        """
+        Increment the value of a progress bar.
+
+        Parameters
+        ----------
+        progress_bar : QProgressBar
+            Progress bar to increment
+
+        Returns
+        -------
+            None
+        """
+        progress_bar.setValue(progress_bar.value() + 1)
 
     def _clear_status(self) -> None:
         """

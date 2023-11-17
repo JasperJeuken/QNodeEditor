@@ -29,7 +29,9 @@ extensions = [
     'sphinx_toolbox.sidebar_links',
     'sphinx_toolbox.github',
     'sphinx_toolbox.more_autodoc.overloads',
-    'sphinx_design'
+    'sphinx_design',
+    'sphinx.ext.intersphinx',
+    'sphinx_qt_documentation'
 ]
 autosummary_generate = True
 autodoc_default_options = {
