@@ -14,7 +14,7 @@ from PyQt5.QtCore import QObject, pyqtSignal
 from QNodeEditor.entry import Entry
 from QNodeEditor.graphics.node import NodeGraphics
 from QNodeEditor.metas import ObjectMeta
-from QNodeEditor.util import NoValue
+from QNodeEditor.util import NoValue, get_widget_value
 from QNodeEditor.entries import ValueBoxEntry, ComboBoxEntry, LabeledEntry
 if TYPE_CHECKING:
     from QNodeEditor.scene import NodeScene
@@ -144,6 +144,8 @@ class Node(QObject, metaclass=ObjectMeta):
 
         Use the :py:meth:`set_output_value` method to set output values of the node.
 
+        By default, the entry outputs are set using the corresponding widget value.
+
         Parameters
         ----------
         entry_values : dict[str, Any]
@@ -153,7 +155,9 @@ class Node(QObject, metaclass=ObjectMeta):
         -------
             None
         """
-        raise NotImplementedError(f"The 'evaluate' function was not implemented for '{self}'")
+        for entry in self.entries:
+            if entry.entry_type == Entry.TYPE_OUTPUT:
+                self.set_output_value(entry, get_widget_value(entry.widget))
 
     @property
     def scene(self) -> Optional['NodeScene']:
