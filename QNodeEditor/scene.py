@@ -72,8 +72,8 @@ class NodeScene(QObject, metaclass=ObjectMeta):
     """pyqtSignal -> dict: Signal that emits a dictionary with the result of evaluating the scene"""
     errored: pyqtSignal = pyqtSignal(Exception)
     """pyqtSignal -> Exception: Signal that emits the error if once occurs during evaluation"""
-    progress: pyqtSignal = pyqtSignal()
-    """pyqtSignal -> Signal that is emitted when a node has been evaluated"""
+    progress: pyqtSignal = pyqtSignal(float)
+    """pyqtSignal -> Signal that emits the current progress of the evaluation [0.0, 1.0]"""
 
     # Create scene thread reference
     _thread: QThread = None
@@ -103,6 +103,10 @@ class NodeScene(QObject, metaclass=ObjectMeta):
         # Create scene management
         self.clipboard: Clipboard = Clipboard(self)
         self.output_node: Optional[Type[Node]] = None
+
+        # Create tracking variable for evaluation progress
+        self._n_nodes: int = 0
+        self._n_evaluated: int = 0
 
     def add_node(self, node: 'Node') -> None:
         """
@@ -531,7 +535,7 @@ class NodeScene(QObject, metaclass=ObjectMeta):
             raise ValueError('There are multiple output nodes in the scene')
         return output_nodes[0]
 
-    def evaluate(self) -> int:
+    def evaluate(self) -> None:
         """
         Evaluate the scene by traversing the nodes and their connections.
 
@@ -541,17 +545,21 @@ class NodeScene(QObject, metaclass=ObjectMeta):
         If an error occurs during the evaluation, it is emitted through the :py:attr:`errored`
         signal (and nothing through the :py:attr:`evaluated` signal).
 
+        For each node that is evaluated, the :py:attr:`progress` signal emits the current progress
+        in the evaluation. The signal emits a ``float`` that represents the percentage of the
+        current evaluation (0.0 to 1.0).
+
         Returns
         -------
-        int
-            Number of nodes that will be evaluated asynchronously
+            None
         """
         # Count the number of nodes that have to be evaluated
-        n_nodes = len(self.simplified_digraph().nodes) - 1
+        self._n_nodes = len(self.simplified_digraph().nodes) - 1
+        self._n_evaluated = 0
 
         # Connect node evaluation signals
         for node in self.nodes:
-            node.evaluated.connect(self.progress.emit)
+            node.evaluated.connect(self._emit_progress)
 
         # Disable view while calculating
         self._disable_view(True)
@@ -569,7 +577,6 @@ class NodeScene(QObject, metaclass=ObjectMeta):
 
         # Move worker to thread and start it
         self._thread.start()
-        return n_nodes
 
     def _handle_done(self) -> None:
         """
@@ -606,6 +613,17 @@ class NodeScene(QObject, metaclass=ObjectMeta):
         """
         for view in self.graphics.views():
             view.setDisabled(disabled)
+
+    def _emit_progress(self) -> None:
+        """
+        Emit scene evaluation progress.
+
+        Returns
+        -------
+            None
+        """
+        self._n_evaluated += 1
+        self.progress.emit(self._n_evaluated / self._n_nodes)
 
     def digraph(self) -> DiGraph:
         """

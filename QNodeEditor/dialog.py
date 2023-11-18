@@ -128,12 +128,12 @@ class NodeEditorDialog(QDialog):
 
         # Add a progress bar to the status layout
         progress_bar = QProgressBar()
+        progress_bar.setMaximum(100)
         self.editor.scene.progress.connect(partial(self._update_progress, progress_bar))
         self._status_layout.addWidget(progress_bar)
 
         # Start evaluation
-        n_nodes = self.editor.scene.evaluate()
-        progress_bar.setMaximum(n_nodes)
+        self.editor.scene.evaluate()
 
     def _handle_result(self, result: dict[str, Any]) -> None:
         """
@@ -201,7 +201,7 @@ class NodeEditorDialog(QDialog):
         self._status_layout.addStretch()
 
     @staticmethod
-    def _update_progress(progress_bar: QProgressBar) -> None:
+    def _update_progress(progress_bar: QProgressBar, progress: float) -> None:
         """
         Increment the value of a progress bar.
 
@@ -209,12 +209,14 @@ class NodeEditorDialog(QDialog):
         ----------
         progress_bar : QProgressBar
             Progress bar to increment
+        progress : float
+            Current evaluation progress (between 0.0 and 1.0)
 
         Returns
         -------
             None
         """
-        progress_bar.setValue(progress_bar.value() + 1)
+        progress_bar.setValue(int(progress * 100))
 
     def _clear_status(self) -> None:
         """

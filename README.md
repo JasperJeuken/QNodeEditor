@@ -4,13 +4,14 @@
 [<img src="https://img.shields.io/badge/github--blue?logo=github" alt="Github badge">](https://github.com/JasperJeuken/QNodeEditor)
 [<img src="https://img.shields.io/badge/PyPi--blue?logo=pypi" alt="PyPi badge">](https://pypi.org/project/QNodeEditor/)
 [<img src="https://img.shields.io/badge/Documentation--blue?logo=readthedocs" alt="readthedocs badge">](https://qnodeeditor.readthedocs.io/en/latest/)
+[<img src="https://readthedocs.org/projects/qnodeeditor/badge/" alt="readthedocs badge 2">](https://qnodeeditor.readthedocs.io/en/latest/)
 
 QNodeEditor is a collection of widgets that enables you to easily create 
 and use a node editing environment in PyQt5.
 
 | <img src="https://raw.githubusercontent.com/JasperJeuken/QNodeEditor/main/images/demo.gif" alt="Example node scene being edited" width="100%"/> |
-|:---------------------------------------------------------------------------------:|
-|             <div width="100%">*Example node scene being edited*</div>             |
+|:-----------------------------------------------------------------------------------------------------------------------------------------------:|
+|                                            <div width="100%">*Example node scene being edited*</div>                                            |
 
 |  <img src="https://raw.githubusercontent.com/JasperJeuken/QNodeEditor/main/images/themes.jpg" alt="drawing" width="100%"/>   |
 |:----------------------------------------------------------------------------------------------------------------------------:|
