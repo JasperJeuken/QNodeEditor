@@ -553,9 +553,12 @@ class NodeScene(QObject, metaclass=ObjectMeta):
         -------
             None
         """
-        # Count the number of nodes that have to be evaluated
-        self._n_nodes = len(self.simplified_digraph().nodes) - 1
-        self._n_evaluated = 0
+        # Count the number of nodes that have to be evaluated (if possible)
+        try:
+            self._n_nodes = len(self.simplified_digraph().nodes) - 1
+            self._n_evaluated = 0
+        except ValueError:
+            pass
 
         # Connect node evaluation signals
         for node in self.nodes:
