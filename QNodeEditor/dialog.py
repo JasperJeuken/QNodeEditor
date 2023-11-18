@@ -128,7 +128,7 @@ class NodeEditorDialog(QDialog):
 
         # Add a progress bar to the status layout
         progress_bar = QProgressBar()
-        progress_bar.setMaximum(100)
+        progress_bar.setMaximum(0)
         self.editor.scene.progress.connect(partial(self._update_progress, progress_bar))
         self._status_layout.addWidget(progress_bar)
 
@@ -216,6 +216,7 @@ class NodeEditorDialog(QDialog):
         -------
             None
         """
+        progress_bar.setMaximum(100)
         progress_bar.setValue(int(progress * 100))
 
     def _clear_status(self) -> None:
