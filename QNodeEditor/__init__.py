@@ -1,5 +1,5 @@
 """Module containing all elements for a node editor in PyQt5"""
-__version__ = "1.0.1"
+__version__ = "1.0.2"
 from .scene import NodeScene
 from .node import Node
 from .entry import Entry

@@ -16,7 +16,6 @@ and use a node editing environment in PyQt5.
 |:----------------------------------------------------------------------------------------------------------------------------:|
 |                                <div width="100%">*QNodeEditor supports flexible themes*</div>                                |
 
-
 ## Installing
 Install the package using the following command:
 
@@ -63,5 +62,7 @@ A node scene evaluates the scene asynchronously, meaning the interface will not 
 and you can handle it as you want.
 
 ## License
+This package uses the MIT License (see the [LICENSE](./LICENSE) file).
+
 The package is inspired by the [pyqt-node-editor](https://gitlab.com/pavel.krupala/pyqt-node-editor)
 (MIT license) package by Pavel Křupala.
