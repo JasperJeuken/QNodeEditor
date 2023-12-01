@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "QNodeEditor"
-version = "1.0.2"
+version = "1.0.3"
 description = "Node editor for PyQt5"
 readme = "README.md"
 authors = [{ name = "Jasper Jeuken" }]
