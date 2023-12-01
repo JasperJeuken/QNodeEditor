@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "QNodeEditor"
-version = "1.0.3"
+version = "1.0.4"
 description = "Node editor for PyQt5"
 readme = "README.md"
 authors = [{ name = "Jasper Jeuken" }]
@@ -20,8 +20,7 @@ keywords = ["node", "editor", "pyqt5", "pyqt", "pyside2", "pyside", "socket", "e
     "connection", "nodes", "qnode", "qnodeeditor"]
 dependencies = [
     "PyQt5 ~= 5.15.10",
-    "networkx ~= 3.2.1",
-    "setuptools ~= 68.2.0"
+    "networkx ~= 3.2.1"
 ]
 requires-python = ">=3.9"
 
@@ -33,8 +32,10 @@ Documentation = "https://qnodeeditor.readthedocs.io/en/latest/"
 [project.optional-dependencies]
 docs = ["sphinx-toolbox", "pydata-sphinx-theme", "sphinx-design", "sphinx-qt-documentation"]
 
+[tool.setuptools.packages.find]
+include = ['QNodeEditor*']
+
 [tool.setuptools]
-py-modules = []
 include-package-data = true
 
 [tool.setuptools.package-data]
