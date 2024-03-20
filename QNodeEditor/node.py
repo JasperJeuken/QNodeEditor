@@ -9,13 +9,15 @@ up the structure of the node and determine its look. Contains a graphics object 
 from abc import abstractmethod
 from typing import TYPE_CHECKING, Optional, Iterable, overload, Any, Type
 
+from PyQt5.QtWidgets import QCompleter
 from PyQt5.QtCore import QObject, pyqtSignal
+from PyQt5.QtGui import QValidator
 
 from QNodeEditor.entry import Entry
 from QNodeEditor.graphics.node import NodeGraphics
 from QNodeEditor.metas import ObjectMeta
 from QNodeEditor.util import NoValue, get_widget_value
-from QNodeEditor.entries import ValueBoxEntry, ComboBoxEntry, LabeledEntry
+from QNodeEditor.entries import ValueBoxEntry, ComboBoxEntry, LabeledEntry, TextBoxEntry
 if TYPE_CHECKING:
     from QNodeEditor.scene import NodeScene
     from QNodeEditor.socket import Socket
@@ -735,6 +737,112 @@ class Node(QObject, metaclass=ObjectMeta):
         """
         entry = ComboBoxEntry(name, items=items)
         self.add_entry(entry)
+
+    def add_text_entry(self, name: str, entry_type: int = Entry.TYPE_STATIC, value: str = '',
+                       max_length: int = 32767, show_clear_button: bool = False,
+                       input_mask: str = '', completer: Optional[QCompleter] = None,
+                       validator: Optional[QValidator] = None) -> None:
+        """
+        Add a new text box entry to the node.
+
+        Adds a new entry to the node containing a :py:class:`~.widgets.text_box.TextBox` widget.
+
+        By default, the entry is static (no inputs/outputs).
+
+        Parameters
+        ----------
+        name : str
+            Name of this entry
+        entry_type : int
+            Type of entry (:py:attr:`~.entry.Entry.TYPE_STATIC`, :py:attr:`~.entry.Entry.TYPE_INPUT`
+            , or :py:attr:`~.entry.Entry.TYPE_OUTPUT`)
+        value : str, optional
+            Initial value of the :py:class:`~.widgets.text_box.TextBox`
+        max_length : int, optional
+            Maximum length of the string in the text box
+        show_clear_button : bool, optional
+            Show a clear button in the text box when the string is not empty
+        input_mask : str, optional
+            Input mask to use for text box (see QLineEdit input mask)
+        completer : Optional[QCompleter], optional
+            Auto-completer to use for the text box
+        validator : Optional[QValidator], optional
+            Validator to use for the text box
+        Returns
+        -------
+            None
+        """
+        entry = TextBoxEntry(name, entry_type, value, max_length, show_clear_button, input_mask,
+                             completer, validator, theme=self.graphics.theme)
+        self.add_entry(entry)
+
+    def add_text_input(self, name: str, value: str = '', max_length: int = 32767,
+                       show_clear_button: bool = False, input_mask: str = '',
+                       completer: Optional[QCompleter] = None,
+                       validator: Optional[QValidator] = None) -> None:
+        """
+        Add a new text box input to the node.
+
+        Adds a new entry to the node containing a :py:class:`~.widgets.text_box.TextBox` widget.
+        The entry has an input socket.
+
+        Parameters
+        ----------
+        name : str
+            Name of this entry
+        value : str, optional
+            Initial value of the :py:class:`~.widgets.text_box.TextBox`
+        max_length : int, optional
+            Maximum length of the string in the text box
+        show_clear_button : bool, optional
+            Show a clear button in the text box when the string is not empty
+        input_mask : str, optional
+            Input mask to use for text box (see QLineEdit input mask)
+        completer : Optional[QCompleter], optional
+            Auto-completer to use for the text box
+        validator : Optional[QValidator], optional
+            Validator to use for the text box
+
+        Returns
+        -------
+            None
+        """
+        self.add_text_entry(name, Entry.TYPE_INPUT, value, max_length, show_clear_button,
+                            input_mask, completer, validator)
+
+    def add_text_output(self, name: str, value: str = '', max_length: int = 32767,
+                        show_clear_button: bool = False, input_mask: str = '',
+                        completer: Optional[QCompleter] = None,
+                        validator: Optional[QValidator] = None) -> None:
+        """
+        Add a new text box output to the node.
+
+        Adds a new entry to the node containing a :py:class:`~.widgets.text_box.TextBox` widget.
+        The entry has an output socket.
+
+        Parameters
+        ----------
+        name : str
+            Name of this entry
+        value : str, optional
+            Initial value of the :py:class:`~.widgets.text_box.TextBox`
+        max_length : int, optional
+            Maximum length of the string in the text box
+        show_clear_button : bool, optional
+            Show a clear button in the text box when the string is not empty
+        input_mask : str, optional
+            Input mask to use for text box (see QLineEdit input mask)
+        completer : Optional[QCompleter], optional
+            Auto-completer to use for the text box
+        validator : Optional[QValidator], optional
+            Validator to use for the text box
+
+        Returns
+        -------
+            None
+        """
+        self.add_text_entry(name, Entry.TYPE_OUTPUT, value, max_length, show_clear_button,
+                            input_mask, completer, validator)
 
     def __getitem__(self, item: int or str) -> Entry:
         """

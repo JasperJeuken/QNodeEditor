@@ -220,8 +220,13 @@ class NodeView(QGraphicsView):
 
         :meta private:
         """
-        # Remove selected items (if content is not being edited)
-        if event.key() == Qt.Key_Delete and not self._editing:
+        # Ignore any keypresses while scene content is being edited
+        if self._editing:
+            super().keyPressEvent(event)
+            return
+
+        # Remove selected items
+        if event.key() == Qt.Key_Delete:
             self.remove_selected()
             return event.accept()
 
@@ -248,11 +253,6 @@ class NodeView(QGraphicsView):
             return event.accept()
         if event.key() == Qt.Key_D:
             self.theme = DarkTheme
-            return event.accept()
-
-        # TODO: remove temp evaluate
-        if event.key() == Qt.Key_E:
-            self.scene_graphics.scene.evaluate()
             return event.accept()
 
         # Use default handler otherwise

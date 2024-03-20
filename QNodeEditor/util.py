@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import (QWidget, QCheckBox, QCalendarWidget, QColorDialog, 
                              QFontComboBox, QKeySequenceEdit, QLineEdit, QListWidget,
                              QPlainTextEdit, QRadioButton, QSlider, QTextEdit, QLayout)
 
-from QNodeEditor.widgets import ComboBox, ValueBox
+from QNodeEditor.widgets import ComboBox, ValueBox, TextBox
 
 
 def get_widget_value(widget: QWidget) -> Any:
@@ -23,6 +23,8 @@ def get_widget_value(widget: QWidget) -> Any:
         if widget.currentData() is not None:
             return widget.currentData()
         return widget.currentText()
+    if isinstance(widget, TextBox):
+        return widget.value
 
     # Default PyQt5 widgets
     if isinstance(widget, QComboBox):
@@ -63,6 +65,11 @@ def get_widget_value(widget: QWidget) -> Any:
         return widget.value()
     if isinstance(widget, QTextEdit):
         return widget.toPlainText()
+
+    # Check if widget has 'value' attribute
+    if hasattr(widget, 'value'):
+        return widget.value
+
     return None
 
 
@@ -86,6 +93,9 @@ def set_widget_value(widget: QWidget, value: Any) -> None:
             widget.setCurrentText(value)
             return
         raise TypeError(f"Could not set value '{value}' for widget '{widget}'")
+    if isinstance(widget, TextBox):
+        widget.value = value
+        return
 
     # Default PyQt5 widgets
     if isinstance(widget, QComboBox):
@@ -146,6 +156,11 @@ def set_widget_value(widget: QWidget, value: Any) -> None:
         return
     if isinstance(widget, QTextEdit):
         widget.setText(value)
+        return
+
+    # Check if widget has 'value' attribute
+    if hasattr(widget, 'value'):
+        widget.value = value
         return
     raise TypeError(f"Could not set value '{value}' for widget '{widget}'")
 
