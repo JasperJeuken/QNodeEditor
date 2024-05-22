@@ -39,7 +39,8 @@ class NodeView(QGraphicsView):
     STATE_PLACING: int = 3
     """int: Placing state (a item or group of items is being placed)"""
 
-    def __init__(self, scene_graphics: NodeSceneGraphics, theme: ThemeType = DarkTheme):
+    def __init__(self, scene_graphics: NodeSceneGraphics, theme: ThemeType = DarkTheme,
+                 allow_multiple_inputs: bool = False):
         """
         Create a new node view.
 
@@ -49,6 +50,9 @@ class NodeView(QGraphicsView):
             Scene graphics this view is for.
         theme :  Type[:py:class:`~QNodeEditor.themes.theme.Theme`], optional
             Theme for the node view (default: :py:class:`~QNodeEditor.themes.dark.DarkTheme`)
+        allow_multiple_inputs: bool
+            If True, multiple edges can be connected to a single input, otherwise only a single
+            edge can be connected to any input.
         """
         super().__init__(scene_graphics)
         self.scene_graphics: NodeSceneGraphics = scene_graphics
@@ -94,6 +98,7 @@ class NodeView(QGraphicsView):
         self._last_left_click: QPoint = QPoint()
         self._last_right_click: QPoint = QPoint()
         self._editing: bool = False
+        self._allow_multiple_inputs: bool = allow_multiple_inputs
 
     @property
     def theme(self) -> ThemeType:
@@ -581,10 +586,11 @@ class NodeView(QGraphicsView):
                 return
 
         # Remove all present edges from input sockets (only single edge allowed)
-        if item.socket.entry.entry_type == Entry.TYPE_INPUT:
-            item.socket.remove_all_edges()
-        if self._drag_start.entry.entry_type == Entry.TYPE_INPUT:
-            self._drag_start.remove_all_edges()
+        if not self._allow_multiple_inputs:
+            if item.socket.entry.entry_type == Entry.TYPE_INPUT:
+                item.socket.remove_all_edges()
+            if self._drag_start.entry.entry_type == Entry.TYPE_INPUT:
+                self._drag_start.remove_all_edges()
 
         # Create a new edge to connect the start and end sockets
         Edge(self._drag_start, item.socket, self.scene_graphics.scene, self.theme)
