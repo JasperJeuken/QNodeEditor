@@ -59,7 +59,9 @@ class NodeEditorDialog(QDialog):
         the names of the entries, and the values the input result that they received.
     """
 
-    def __init__(self, parent: QWidget = None, theme: ThemeType = DarkTheme):
+    def __init__(self, parent: QWidget = None,
+                 theme: ThemeType = DarkTheme,
+                 allow_multiple_inputs: bool = False):
         """
         Create a new node editor dialog.
 
@@ -69,6 +71,9 @@ class NodeEditorDialog(QDialog):
             Parent widget for this dialog (if any)
         theme : Type[:py:class:`~QNodeEditor.themes.theme.Theme`], optional
             Theme for the dialog (default: :py:class:`~QNodeEditor.themes.dark.DarkTheme`)
+        allow_multiple_inputs : bool
+            If set to True, multiple edges can be connected to the same node input. Otherwise, only
+            a single edge can be connected to any input.
         """
         super().__init__(parent, Qt.WindowCloseButtonHint)
         self.setWindowTitle('Node editor')
@@ -81,7 +86,7 @@ class NodeEditorDialog(QDialog):
         self.setLayout(layout)
 
         # Add node editor
-        self.editor: NodeEditor = NodeEditor(self, theme)
+        self.editor: NodeEditor = NodeEditor(self, theme, allow_multiple_inputs)
         self.editor.scene.evaluated.connect(self._handle_result)
         self.editor.scene.errored.connect(self._handle_error)
         layout.addWidget(self.editor, 1)

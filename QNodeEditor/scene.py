@@ -852,7 +852,7 @@ class Worker(QObject):
             if scene.has_cycles():
                 raise ValueError('Cannot evaluate scene since there are cycles in the connections')
 
-            # Rest all node outputs
+            # Reset all node outputs
             for node in scene.nodes:
                 node.output = None
 

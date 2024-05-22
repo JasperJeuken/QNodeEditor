@@ -171,7 +171,7 @@ class Entry(QObject, metaclass=ObjectMeta):
         if self.entry_type in (self.TYPE_STATIC, self.TYPE_OUTPUT) or len(self.socket.edges) == 0:
             return get_widget_value(self.widget)
 
-        # Otherwise, obtain the value from the connected edge
+        # Otherwise, get the vale from the connected edge(s)
         return self._get_connected_value()
 
     def _get_connected_value(self) -> Any:
@@ -183,16 +183,24 @@ class Entry(QObject, metaclass=ObjectMeta):
         Any
             Value of the connected output entry.
         """
-        # Get the entry that is connected to the input socket
-        edge = self.socket.edges[0]
-        if edge.start == self.socket:
-            connected_entry = edge.end.entry
-        else:
-            connected_entry = edge.start.entry
+        # Go through each connected edge to determine its value
+        values = []
+        for edge in self.socket.edges:
 
-        # Get the output from the node the connected entry is in and return the relevant value
-        output = connected_entry.node.output
-        return output[connected_entry.name]
+            # Get the entry that is connected to the input socket
+            if edge.start == self.socket:
+                connected_entry = edge.end.entry
+            else:
+                connected_entry = edge.start.entry
+
+            # Get the output from the node the connected entry is in and store the relevant value
+            output = connected_entry.node.output
+            values.append(output[connected_entry.name])
+
+        # If there is only one edge, return only its value. Return all values otherwise
+        if len(values) == 1:
+            return values[0]
+        return values
 
     @property
     def theme(self) -> ThemeType:

@@ -43,7 +43,9 @@ class NodeEditor(QWidget):
     errored: pyqtSignal = pyqtSignal(Exception)
     """pyqtSignal -> Exception: Signal that emits the error if evaluation failed"""
 
-    def __init__(self, parent: QWidget = None, theme: ThemeType = DarkTheme):
+    def __init__(self, parent: QWidget = None,
+                 theme: ThemeType = DarkTheme,
+                 allow_multiple_inputs: bool = False):
         """
         Create a new node editor widget.
 
@@ -53,6 +55,9 @@ class NodeEditor(QWidget):
             Parent widget for this node editor (if any)
         theme : Type[:py:class:`~QNodeEditor.themes.theme.Theme`], optional
             Theme for the node editor (default: :py:class:`~QNodeEditor.themes.dark.DarkTheme`)
+        allow_multiple_inputs : bool
+            If set to True, multiple edges can be connected to the same node input. Otherwise, only
+            a single edge can be connected to any input.
         """
         super().__init__(parent)
 
@@ -63,7 +68,8 @@ class NodeEditor(QWidget):
 
         # Create node scene and view
         self.scene: NodeScene = NodeScene(self)
-        self.view: NodeView = NodeView(self.scene.graphics)
+        self.view: NodeView = NodeView(self.scene.graphics,
+                                       allow_multiple_inputs=allow_multiple_inputs)
         layout.addWidget(self.view)
 
         # Set node editor theme
