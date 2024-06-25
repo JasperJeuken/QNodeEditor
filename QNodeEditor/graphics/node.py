@@ -2,13 +2,20 @@
 Module containing extension of QGraphicsItem representing a node.
 """
 # pylint: disable = no-name-in-module, C0103
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-from PyQt5.QtWidgets import QGraphicsItem, QGraphicsDropShadowEffect, QGraphicsTextItem
-from PyQt5.QtCore import QRectF, Qt, QPointF, QVariant
-from PyQt5.QtGui import QPainter, QPainterPath, QColor, QBrush, QPen, QFontMetrics
+try:
+    from PySide6.QtWidgets import QGraphicsItem, QGraphicsDropShadowEffect, QGraphicsTextItem
+    from PySide6.QtCore import QRectF, Qt, QPointF
+    from PySide6.QtGui import QPainter, QPainterPath, QColor, QBrush, QPen, QFontMetrics
+except ImportError:
+    from PyQt5.QtWidgets import QGraphicsItem, QGraphicsDropShadowEffect, QGraphicsTextItem
+    from PyQt5.QtCore import QRectF, Qt, QPointF
+    from PyQt5.QtGui import QPainter, QPainterPath, QColor, QBrush, QPen, QFontMetrics
 
 from QNodeEditor.themes import ThemeType, DarkTheme
+from QNodeEditor.graphics.entry import EntryGraphics
+from QNodeEditor.graphics.scene import NodeSceneGraphics
 if TYPE_CHECKING:
     from QNodeEditor.node import Node
     from QNodeEditor.entry import Entry
@@ -185,7 +192,9 @@ class NodeGraphics(QGraphicsItem):
         self._hovered = False
         self.update()
 
-    def itemChange(self, change: QGraphicsItem.GraphicsItemChange, value: QVariant) -> QVariant:
+    def itemChange(self, change: QGraphicsItem.GraphicsItemChange,
+                   value: int | QGraphicsItem | EntryGraphics | NodeSceneGraphics) \
+            -> int | QGraphicsItem | EntryGraphics | NodeSceneGraphics:
         """
         Update the node and connected edges if it was moved.
 

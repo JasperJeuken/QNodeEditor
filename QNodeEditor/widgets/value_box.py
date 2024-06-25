@@ -5,11 +5,19 @@ Module containing custom value box for number inputs with slide controls and lin
 from typing import Optional, Type
 from functools import partial
 
-from PyQt5.QtWidgets import (QLineEdit, QWidget, QPushButton, QHBoxLayout, QSizePolicy, QLabel,
-                             QApplication, QSpacerItem, QStackedLayout)
-from PyQt5.QtCore import QPoint, pyqtSignal, Qt, QObject, QEvent
-from PyQt5.QtGui import (QMouseEvent, QIntValidator, QDoubleValidator, QFocusEvent, QKeyEvent,
-                         QPalette, QColor, QEnterEvent)
+try:
+    from PySide6.QtWidgets import (QLineEdit, QWidget, QPushButton, QHBoxLayout, QSizePolicy, QLabel,
+                                   QApplication, QSpacerItem, QStackedLayout)
+    from PySide6.QtCore import Signal as pyqtSignal
+    from PySide6.QtCore import QPoint, Qt, QObject, QEvent
+    from PySide6.QtGui import (QMouseEvent, QIntValidator, QDoubleValidator, QFocusEvent, QKeyEvent,
+                               QPalette, QColor, QEnterEvent)
+except ImportError:
+    from PyQt5.QtWidgets import (QLineEdit, QWidget, QPushButton, QHBoxLayout, QSizePolicy, QLabel,
+                                 QApplication, QSpacerItem, QStackedLayout)
+    from PyQt5.QtCore import QPoint, pyqtSignal, Qt, QObject, QEvent
+    from PyQt5.QtGui import (QMouseEvent, QIntValidator, QDoubleValidator, QFocusEvent, QKeyEvent,
+                             QPalette, QColor, QEnterEvent)
 
 from QNodeEditor.themes import ThemeType, DarkTheme
 

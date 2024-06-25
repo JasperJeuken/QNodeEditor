@@ -10,10 +10,16 @@ from typing import Optional, Any
 import traceback
 from functools import partial
 
-from PyQt5.QtWidgets import (QDialog, QPushButton, QWidget, QHBoxLayout, QVBoxLayout, QLabel,
-                             QMessageBox, QTextEdit, QProgressBar)
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFontMetrics, QKeyEvent
+try:
+    from PySide6.QtWidgets import (QDialog, QPushButton, QWidget, QHBoxLayout, QVBoxLayout, QLabel,
+                                   QMessageBox, QTextEdit, QProgressBar)
+    from PySide6.QtCore import Qt
+    from PySide6.QtGui import QFontMetrics, QKeyEvent
+except ImportError:
+    from PyQt5.QtWidgets import (QDialog, QPushButton, QWidget, QHBoxLayout, QVBoxLayout, QLabel,
+                                 QMessageBox, QTextEdit, QProgressBar)
+    from PyQt5.QtCore import Qt
+    from PyQt5.QtGui import QFontMetrics, QKeyEvent
 
 from QNodeEditor.editor import NodeEditor
 from QNodeEditor.themes import ThemeType, DarkTheme

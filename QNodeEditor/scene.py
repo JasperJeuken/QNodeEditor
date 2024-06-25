@@ -9,8 +9,14 @@ import json
 from typing import TYPE_CHECKING, Iterable, Type, overload, Optional
 from functools import partial
 
-from PyQt5.QtWidgets import QWidget
-from PyQt5.QtCore import QObject, QThread, pyqtSignal
+try:
+    from PySide6.QtWidgets import QWidget
+    from PySide6.QtCore import Signal as pyqtSignal
+    from PySide6.QtCore import QObject, QThread
+except ImportError:
+    from PyQt5.QtWidgets import QWidget, QVBoxLayout
+    from PyQt5.QtCore import pyqtSignal, QObject, QThread
+
 from networkx import DiGraph, find_cycle, NetworkXNoCycle, has_path
 
 from QNodeEditor.graphics.scene import NodeSceneGraphics
@@ -276,8 +282,13 @@ class NodeScene(QObject, metaclass=ObjectMeta):
         # Get the node class definition if argument is node code or instance of node
         if isinstance(node, int):
             node = self.get_node_class(node)
-        if isinstance(node, Node):
+        # For reasons unknown Node does not have _abc_impl which prevents the usage of isinstance().
+        # It might be related to the usage of a custom metaclass but further investigation is needed.
+        # The below workaround works due to Qt adding a QMetaObject to all its classes which can be compared.
+        if not Node.staticMetaObject == node.staticMetaObject.superClass():
             node = type(node)
+        #if isinstance(node, Node):
+        #    node = type(node)
 
         # Ensure node definition is known in scene
         if node not in self.available_classes():
@@ -359,8 +370,13 @@ class NodeScene(QObject, metaclass=ObjectMeta):
                 if isinstance(value, dict):
                     _parse(value, known_codes)
                     continue
-                if not issubclass(value, Node) or value is Node:
+                # For reasons unknown Node does not have _abc_impl which prevents the usage of issubclass().
+                # It might be related to the usage of a custom metaclass but further investigation is needed.
+                # The below workaround works due to Qt adding a QMetaObject to all its classes which can be compared.
+                if not Node.staticMetaObject == value.staticMetaObject.superClass() or value is Node:
                     raise TypeError(f"Node item '{value}' does not inherit from Node")
+                #if not issubclass(value, Node) or value is Node:
+                #    raise TypeError(f"Node item '{value}' does not inherit from Node")
                 if value.code in known_codes:
                     raise ValueError(f'A node with code {value.code} '
                                      f'was already defined (must be unique)')

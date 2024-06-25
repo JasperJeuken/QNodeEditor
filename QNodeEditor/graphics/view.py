@@ -6,9 +6,14 @@ from typing import Optional, Type, Iterable
 from math import sqrt
 from functools import partial
 
-from PyQt5.QtWidgets import QGraphicsView, QGraphicsItem, QMenu, QAction, QFrame
-from PyQt5.QtCore import Qt, QPoint, QRectF
-from PyQt5.QtGui import QPainter, QMouseEvent, QWheelEvent, QKeyEvent, QCursor, QContextMenuEvent
+try:
+    from PySide6.QtWidgets import QGraphicsView, QGraphicsItem, QMenu, QFrame
+    from PySide6.QtCore import Qt, QPoint, QRectF
+    from PySide6.QtGui import QAction, QPainter, QMouseEvent, QWheelEvent, QKeyEvent, QCursor, QContextMenuEvent
+except ImportError:
+    from PyQt5.QtWidgets import QGraphicsView, QGraphicsItem, QMenu, QAction, QFrame
+    from PyQt5.QtCore import Qt, QPoint, QRectF
+    from PyQt5.QtGui import QPainter, QMouseEvent, QWheelEvent, QKeyEvent, QCursor, QContextMenuEvent
 
 from QNodeEditor.node import Node
 from QNodeEditor.edge import Edge
@@ -67,7 +72,7 @@ class NodeView(QGraphicsView):
 
         # Set graphics rendering properties
         self.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
-        self.setRenderHints(QPainter.Antialiasing | QPainter.HighQualityAntialiasing |
+        self.setRenderHints(QPainter.Antialiasing | #QPainter.HighQualityAntialiasing |
                             QPainter.TextAntialiasing | QPainter.SmoothPixmapTransform)
 
         # Set viewport properties
@@ -764,7 +769,11 @@ class NodeView(QGraphicsView):
             None
         """
         for item in self.scene_graphics.selectedItems():
-            if isinstance(item, EdgeGraphics):
+            # For reasons unknown EdgeGraphics does not have _abc_impl which prevents the usage of isinstance().
+            # It might be related to the usage of a custom metaclass but further investigation is needed.
+            # The below workaround uses pythons subclass registration to check if the class item is from is a
+            # EdgeGraphics subclass
+            if item.__class__ == EdgeGraphics or item.__class__ in EdgeGraphics.__subclasses__():
                 item.edge.remove()
             elif isinstance(item, NodeGraphics):
                 item.node.remove()

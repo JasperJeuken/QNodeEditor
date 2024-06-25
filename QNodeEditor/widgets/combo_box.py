@@ -2,10 +2,18 @@
 Module containing custom combo box for selection inputs
 """
 # pylint: disable = no-name-in-module, C0103
-from PyQt5.QtWidgets import (QComboBox, QStyledItemDelegate, QStyleOptionViewItem, QApplication,
-                             QFrame, QSizePolicy)
-from PyQt5.QtCore import Qt, QModelIndex, QSize, QRect, QEvent, QObject, pyqtSignal
-from PyQt5.QtGui import QPainter, QPen, QFontMetrics
+
+try:
+    from PySide6.QtWidgets import (QComboBox, QStyledItemDelegate, QStyleOptionViewItem, QApplication,
+                                   QFrame, QSizePolicy)
+    from PySide6.QtCore import Signal as pyqtSignal
+    from PySide6.QtCore import Qt, QModelIndex, QSize, QRect, QEvent, QObject
+    from PySide6.QtGui import QPainter, QPen, QFontMetrics
+except ImportError:
+    from PyQt5.QtWidgets import (QComboBox, QStyledItemDelegate, QStyleOptionViewItem, QApplication,
+                                 QFrame, QSizePolicy)
+    from PyQt5.QtCore import Qt, QModelIndex, QSize, QRect, QEvent, QObject, pyqtSignal
+    from PyQt5.QtGui import QPainter, QPen, QFontMetrics
 
 from QNodeEditor.themes import ThemeType, DarkTheme
 

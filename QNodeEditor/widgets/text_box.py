@@ -3,10 +3,17 @@ Module containing custom line edit for text input
 """
 from typing import Optional
 
-from PyQt5.QtWidgets import (QLineEdit, QWidget, QStackedLayout, QLabel, QSizePolicy, QHBoxLayout,
-                             QCompleter)
-from PyQt5.QtCore import pyqtSignal, Qt
-from PyQt5.QtGui import QFocusEvent, QValidator
+try:
+    from PySide6.QtWidgets import (QLineEdit, QWidget, QStackedLayout, QLabel, QSizePolicy, QHBoxLayout,
+                                   QCompleter)
+    from PySide6.QtCore import Signal as pyqtSignal
+    from PySide6.QtCore import Qt
+    from PySide6.QtGui import QFocusEvent, QValidator
+except ImportError:
+    from PyQt5.QtWidgets import (QLineEdit, QWidget, QStackedLayout, QLabel, QSizePolicy, QHBoxLayout,
+                                 QCompleter)
+    from PyQt5.QtCore import pyqtSignal, Qt
+    from PyQt5.QtGui import QFocusEvent, QValidator
 
 from QNodeEditor.themes import ThemeType, DarkTheme
 

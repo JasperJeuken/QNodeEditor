@@ -5,9 +5,14 @@ Module containing extension of QGraphicsScene for node editor scenes.
 from math import floor, ceil
 from typing import TYPE_CHECKING
 
-from PyQt5.QtWidgets import QGraphicsScene, QWidget
-from PyQt5.QtCore import QRectF, QPoint
-from PyQt5.QtGui import QPainter, QPen
+try:
+    from PySide6.QtWidgets import QGraphicsScene, QWidget
+    from PySide6.QtCore import QRectF, QPoint
+    from PySide6.QtGui import QPainter, QPen
+except ImportError:
+    from PyQt5.QtWidgets import QGraphicsScene, QWidget
+    from PyQt5.QtCore import QRectF, QPoint
+    from PyQt5.QtGui import QPainter, QPen
 
 from QNodeEditor.themes import ThemeType, DarkTheme
 if TYPE_CHECKING:

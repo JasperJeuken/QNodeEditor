@@ -3,8 +3,12 @@ Module containing class for an entry with a text box
 """
 from typing import Optional
 
-from PyQt5.QtWidgets import QCompleter
-from PyQt5.QtGui import QValidator
+try:
+    from PySide6.QtWidgets import QCompleter
+    from PySide6.QtGui import QValidator
+except ImportError:
+    from PyQt5.QtWidgets import QCompleter
+    from PyQt5.QtGui import QValidator
 
 from QNodeEditor.entry import Entry
 from QNodeEditor.widgets import TextBox

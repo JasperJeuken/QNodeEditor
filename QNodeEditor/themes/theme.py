@@ -10,8 +10,12 @@ from typing import Type, Optional
 from pkgutil import get_data
 from pkg_resources import resource_filename
 
-from PyQt5.QtCore import QByteArray, Qt
-from PyQt5.QtGui import QColor, QFontDatabase, QFont
+try:
+    from PySide6.QtCore import QByteArray, Qt
+    from PySide6.QtGui import QColor, QFontDatabase, QFont
+except ImportError:
+    from PyQt5.QtCore import QByteArray, Qt
+    from PyQt5.QtGui import QColor, QFontDatabase, QFont
 
 
 class Theme:

@@ -4,11 +4,13 @@ Module containing extension of QGraphicsProxyWidget representing node entries..
 # pylint: disable = no-name-in-module
 from typing import TYPE_CHECKING, Optional
 
-from PyQt5.QtWidgets import QGraphicsProxyWidget, QGraphicsSceneHoverEvent
-from PyQt5.QtCore import QPoint
-from PyQt5.QtGui import QEnterEvent
+try:
+    from PySide6.QtWidgets import QGraphicsProxyWidget, QGraphicsSceneHoverEvent
+    from PySide6.QtGui import QEnterEvent
+except ImportError:
+    from PyQt5.QtWidgets import QGraphicsProxyWidget, QGraphicsSceneHoverEvent
+    from PyQt5.QtGui import QEnterEvent
 
-from QNodeEditor.widgets.value_box import ValueBox
 if TYPE_CHECKING:
     from QNodeEditor.entry import Entry
 

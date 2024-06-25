@@ -8,8 +8,15 @@ which can be edited at runtime by the user.
 import os
 from typing import Type, TYPE_CHECKING, overload
 
-from PyQt5.QtWidgets import QWidget, QVBoxLayout
-from PyQt5.QtCore import pyqtSignal, Qt
+try:
+    from PySide6.QtWidgets import QWidget, QVBoxLayout
+    from PySide6.QtCore import Signal as pyqtSignal
+    from PySide6.QtCore import Qt
+except ImportError:
+    import warnings
+    warnings.warn("No Installation of PySide6 found falling back to PyQt5")
+    from PyQt5.QtWidgets import QWidget, QVBoxLayout
+    from PyQt5.QtCore import pyqtSignal, Qt
 
 from QNodeEditor import NodeScene, NodeView
 from QNodeEditor.themes import ThemeType, DarkTheme
@@ -59,7 +66,7 @@ class NodeEditor(QWidget):
             If set to True, multiple edges can be connected to the same node input. Otherwise, only
             a single edge can be connected to any input.
         """
-        super().__init__(parent)
+        super().__init__() # parent=parent
 
         # Create widget layout
         layout = QVBoxLayout()

@@ -2,8 +2,12 @@
 Module containing empty QWidget
 """
 # pylint: disable = no-name-in-module
-from PyQt5.QtWidgets import QWidget
-from PyQt5.QtCore import Qt
+try:
+    from PySide6.QtWidgets import QWidget
+    from PySide6.QtCore import Qt
+except ImportError:
+    from PyQt5.QtWidgets import QWidget
+    from PyQt5.QtCore import Qt
 
 
 class EmptyWidget(QWidget):

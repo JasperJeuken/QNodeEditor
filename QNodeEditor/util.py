@@ -2,10 +2,16 @@
 # pylint: disable = no-name-in-module
 from typing import Any
 
-from PyQt5.QtWidgets import (QWidget, QCheckBox, QCalendarWidget, QColorDialog, QDateEdit,
-                             QDateTimeEdit, QTimeEdit, QDial, QDoubleSpinBox, QSpinBox, QComboBox,
-                             QFontComboBox, QKeySequenceEdit, QLineEdit, QListWidget,
-                             QPlainTextEdit, QRadioButton, QSlider, QTextEdit, QLayout)
+try:
+    from PySide6.QtWidgets import (QWidget, QCheckBox, QCalendarWidget, QColorDialog, QDateEdit,
+                                   QDateTimeEdit, QTimeEdit, QDial, QDoubleSpinBox, QSpinBox, QComboBox,
+                                   QFontComboBox, QKeySequenceEdit, QLineEdit, QListWidget,
+                                   QPlainTextEdit, QRadioButton, QSlider, QTextEdit, QLayout)
+except ImportError:
+    from PyQt5.QtWidgets import (QWidget, QCheckBox, QCalendarWidget, QColorDialog, QDateEdit,
+                                 QDateTimeEdit, QTimeEdit, QDial, QDoubleSpinBox, QSpinBox, QComboBox,
+                                 QFontComboBox, QKeySequenceEdit, QLineEdit, QListWidget,
+                                 QPlainTextEdit, QRadioButton, QSlider, QTextEdit, QLayout)
 
 from QNodeEditor.widgets import ComboBox, ValueBox, TextBox
 

@@ -1,6 +1,9 @@
 import traceback
 
-from PyQt5.QtWidgets import QApplication
+try:
+    from PySide6.QtWidgets import QApplication
+except ImportError:
+    from PyQt5.QtWidgets import QApplication
 from QNodeEditor import NodeEditor, Edge
 
 from nodes import ConstantNode, OperationNode, OutputNode, SquareRootNode

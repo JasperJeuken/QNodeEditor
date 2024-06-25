@@ -1,4 +1,7 @@
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton
+try:
+    from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton
+except ImportError:
+    from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton
 
 from QNodeEditor import NodeEditorDialog
 from nodes import ConstantNode, OperationNode, OutputNode, SquareRootNode

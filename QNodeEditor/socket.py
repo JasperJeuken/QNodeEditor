@@ -8,7 +8,12 @@ it.
 from __future__ import annotations
 from typing import TYPE_CHECKING, Type
 
-from PyQt5.QtCore import QObject, pyqtSignal
+try:
+    from PySide6.QtCore import Signal as pyqtSignal
+    from PySide6.QtCore import QObject
+except ImportError:
+    from PyQt5.QtCore import pyqtSignal, QObject
+
 
 from QNodeEditor.graphics.socket import SocketGraphics
 from QNodeEditor.metas import ObjectMeta

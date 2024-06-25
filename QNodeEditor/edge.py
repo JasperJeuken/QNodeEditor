@@ -8,7 +8,11 @@ determine the shape of the edge. Contains a graphics object that exists in a
 # pylint: disable = no-name-in-module
 from typing import Optional, TYPE_CHECKING
 
-from PyQt5.QtCore import QObject, pyqtSignal
+try:
+    from PySide6.QtCore import Signal as pyqtSignal
+    from PySide6.QtCore import QObject
+except ImportError:
+    from PyQt5.QtCore import pyqtSignal, QObject
 
 from QNodeEditor.graphics.edge import EdgeGraphics, BezierEdgeGraphics, DirectEdgeGraphics
 from QNodeEditor.socket import Socket
@@ -82,9 +86,12 @@ class Edge(QObject, metaclass=ObjectMeta):
         """
         super().__init__()
         # Get socket if start or end is an Entry
-        if isinstance(start, Entry):
+        # For reasons unknown Entry does not have _abc_impl which prevents the usage of isinstance().
+        # It might be related to the usage of a custom metaclass but further investigation is needed.
+        # The below workaround works due to Qt adding a QMetaObject to all its classes which can be compared.
+        if start is not None and Entry.staticMetaObject == start.staticMetaObject.superClass():
             start: Socket = start.socket
-        if isinstance(end, Entry):
+        if end is not None and Entry.staticMetaObject == end.staticMetaObject.superClass():
             end: Socket = end.socket
 
         # If the scene is not provided, try to derive it from the start/end sockets
