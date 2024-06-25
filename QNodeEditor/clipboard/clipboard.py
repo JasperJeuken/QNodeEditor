@@ -5,7 +5,10 @@ Module containing class handling clipboard interaction for node scenes
 from typing import TYPE_CHECKING
 import json
 
-from PyQt5.QtWidgets import QApplication
+try:
+    from PySide6.QtWidgets import QApplication
+except ImportError:
+    from PyQt5.QtWidgets import QApplication
 
 from QNodeEditor.graphics.node import NodeGraphics
 from QNodeEditor.graphics.edge import EdgeGraphics

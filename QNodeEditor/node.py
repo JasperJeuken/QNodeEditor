@@ -9,9 +9,15 @@ up the structure of the node and determine its look. Contains a graphics object 
 from abc import abstractmethod
 from typing import TYPE_CHECKING, Optional, Iterable, overload, Any, Type
 
-from PyQt5.QtWidgets import QCompleter
-from PyQt5.QtCore import QObject, pyqtSignal
-from PyQt5.QtGui import QValidator
+try:
+    from PySide6.QtWidgets import QCompleter
+    from PySide6.QtCore import Signal as pyqtSignal
+    from PySide6.QtCore import QObject
+    from PySide6.QtGui import QValidator
+except ImportError:
+    from PyQt5.QtWidgets import QCompleter
+    from PyQt5.QtCore import pyqtSignal, QObject
+    from PyQt5.QtGui import QValidator
 
 from QNodeEditor.entry import Entry
 from QNodeEditor.graphics.node import NodeGraphics

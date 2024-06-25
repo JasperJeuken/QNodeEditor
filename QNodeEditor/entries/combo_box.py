@@ -7,6 +7,11 @@ from QNodeEditor.entry import Entry
 from QNodeEditor.widgets import ComboBox
 from QNodeEditor.themes import ThemeType, DarkTheme
 
+try:
+    from PySide6.QtWidgets import QComboBox
+except ImportError:
+    from PyQt5.QtWidgets import QComboBox
+
 
 class ComboBoxEntry(Entry):
     """

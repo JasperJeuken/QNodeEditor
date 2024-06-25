@@ -1,7 +1,11 @@
 """Class containing dark theme for node editor"""
 # pylint: disable = no-name-in-module, R0801
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QColor
+try:
+    from PySide6.QtCore import Qt
+    from PySide6.QtGui import QColor
+except ImportError:
+    from PyQt5.QtCore import Qt
+    from PyQt5.QtGui import QColor
 
 from QNodeEditor.themes.theme import Theme
 

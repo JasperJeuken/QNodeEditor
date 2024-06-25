@@ -5,9 +5,14 @@ Module containing extensions of QGraphicsPathItem representing various edge type
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 
-from PyQt5.QtWidgets import QGraphicsPathItem, QGraphicsItem
-from PyQt5.QtCore import Qt, QRectF, QPointF, QPoint
-from PyQt5.QtGui import QPainter, QPen, QPainterPath
+try:
+    from PySide6.QtWidgets import QGraphicsPathItem, QGraphicsItem
+    from PySide6.QtCore import Qt, QRectF, QPointF, QPoint
+    from PySide6.QtGui import QPainter, QPen, QPainterPath
+except ImportError:
+    from PyQt5.QtWidgets import QGraphicsPathItem, QGraphicsItem
+    from PyQt5.QtCore import Qt, QRectF, QPointF, QPoint
+    from PyQt5.QtGui import QPainter, QPen, QPainterPath
 
 from QNodeEditor.entry import Entry
 from QNodeEditor.themes import ThemeType, DarkTheme

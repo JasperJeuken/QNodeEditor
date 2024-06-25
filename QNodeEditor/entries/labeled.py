@@ -2,9 +2,15 @@
 Module containing class for an entry with a simple name label
 """
 # pylint: disable = no-name-in-module
-from PyQt5.QtWidgets import QHBoxLayout, QWidget
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFontMetrics
+
+try:
+    from PySide6.QtWidgets import QHBoxLayout, QWidget
+    from PySide6.QtCore import Qt
+    from PySide6.QtGui import QFontMetrics
+except ImportError:
+    from PyQt5.QtWidgets import QHBoxLayout, QWidget
+    from PyQt5.QtCore import Qt
+    from PyQt5.QtGui import QFontMetrics
 
 from QNodeEditor.entry import Entry
 from QNodeEditor.widgets import Label

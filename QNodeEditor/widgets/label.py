@@ -2,7 +2,10 @@
 Module containing custom extension of QLabel with node editor theme
 """
 # pylint: disable = no-name-in-module
-from PyQt5.QtWidgets import QLabel
+try:
+    from PySide6.QtWidgets import QLabel
+except ImportError:
+    from PyQt5.QtWidgets import QLabel
 
 from QNodeEditor.themes import ThemeType, DarkTheme
 

@@ -4,9 +4,14 @@ Module containing extension of QGraphicsItem for graphics of an edge cutting lin
 # pylint: disable = no-name-in-module, C0103
 from typing import TYPE_CHECKING
 
-from PyQt5.QtWidgets import QGraphicsItem
-from PyQt5.QtCore import QPointF, Qt, QRectF, QPoint
-from PyQt5.QtGui import QPen, QPainter, QPainterPath, QPolygonF
+try:
+    from PySide6.QtWidgets import QGraphicsItem
+    from PySide6.QtCore import Qt, QPoint, QRectF, QPointF
+    from PySide6.QtGui import QPainter, QPen, QPainterPath, QPolygonF
+except ImportError:
+    from PyQt5.QtWidgets import QGraphicsItem
+    from PyQt5.QtCore import Qt, QPoint, QRectF, QPointF
+    from PyQt5.QtGui import QPainter, QPen, QPainterPath, QPolygonF
 
 from QNodeEditor.themes import ThemeType, DarkTheme
 if TYPE_CHECKING:

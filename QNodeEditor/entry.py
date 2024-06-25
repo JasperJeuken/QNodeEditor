@@ -8,8 +8,13 @@ socket, depending on the set entry type.
 from abc import abstractmethod
 from typing import TYPE_CHECKING, Optional, Any
 
-from PyQt5.QtWidgets import QWidget
-from PyQt5.QtCore import Qt, QObject, pyqtSignal
+try:
+    from PySide6.QtWidgets import QWidget
+    from PySide6.QtCore import Signal as pyqtSignal
+    from PySide6.QtCore import QObject, Qt
+except ImportError:
+    from PyQt5.QtWidgets import QWidget
+    from PyQt5.QtCore import pyqtSignal, QObject, Qt
 
 from QNodeEditor.widgets import EmptyWidget
 from QNodeEditor.socket import Socket
