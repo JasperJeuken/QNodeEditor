@@ -96,6 +96,8 @@ class Theme:
     """Qt.PenStyle: Style of edges in selected state"""
     edge_style_drag: Qt.PenStyle
     """Qt.PenStyle: Style of edges that are being dragged"""
+    edge_invisible_stroke: float
+    """float: Width of the area around the edge that counts as hovering over the edge"""
 
     # Widget properties
     widget_combo_box_arrow_name: str

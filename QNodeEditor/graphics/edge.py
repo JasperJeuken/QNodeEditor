@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from PyQt5.QtWidgets import QGraphicsPathItem, QGraphicsItem
 from PyQt5.QtCore import Qt, QRectF, QPointF, QPoint
-from PyQt5.QtGui import QPainter, QPen, QPainterPath
+from PyQt5.QtGui import QPainter, QPen, QPainterPath, QPainterPathStroker
 
 from QNodeEditor.entry import Entry
 from QNodeEditor.themes import ThemeType, DarkTheme
@@ -150,7 +150,14 @@ class EdgeGraphics(QGraphicsPathItem, metaclass=GraphicsPathItemMeta):
 
         :meta private:
         """
-        return self.create_path()
+        path = self.create_path()
+
+        # Add invisible stroke to increase hover accuracy
+        stroker = QPainterPathStroker()
+        stroker.setWidth(self.theme.edge_invisible_stroke)
+        hover_path = stroker.createStroke(path)
+
+        return hover_path
 
     @abstractmethod
     def create_path(self) -> QPainterPath:
