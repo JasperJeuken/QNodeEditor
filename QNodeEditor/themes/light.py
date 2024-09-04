@@ -50,6 +50,7 @@ class LightTheme(Theme):
     edge_style_hover: Qt.PenStyle = Qt.SolidLine
     edge_style_selected: Qt.PenStyle = Qt.SolidLine
     edge_style_drag: Qt.PenStyle = Qt.DashLine
+    edge_invisible_stroke: float = 8.0
 
     # Widget properties
     widget_combo_box_arrow_name: str = 'arrow_dark.svg'
