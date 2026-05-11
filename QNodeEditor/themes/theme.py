@@ -137,6 +137,9 @@ class Theme:
     socket_outline_width: float
     """float: Socket outline width"""
 
+    # cache font
+    fontCache: Optional[QFont] = None
+
     @classmethod
     def font(cls, point_size: Optional[int] = None) -> QFont:
         """
@@ -152,13 +155,17 @@ class Theme:
         QFont
             Loaded font
         """
-        # Add application font from resource file
-        data = QByteArray(get_data(__name__, f'fonts/{cls.font_name}'))
-        font_id = QFontDatabase.addApplicationFontFromData(data)
+        if cls.fontCache is not None:
+            font = QFont(cls.fontCache)
+        else:
+            # Add application font from resource file
+            data = QByteArray(get_data(__name__, f"fonts/{cls.font_name}"))
+            font_id = QFontDatabase.addApplicationFontFromData(data)
 
-        # Create a QFont from the font ID
-        font_family = QFontDatabase.applicationFontFamilies(font_id)[0]
-        font = QFont(font_family)
+            # Create a QFont from the font ID
+            font_family = QFontDatabase.applicationFontFamilies(font_id)[0]
+            font = QFont(font_family)
+            cls.fontCache = font
 
         # Set point size if specified, or use default size
         if point_size is not None:
@@ -166,6 +173,7 @@ class Theme:
         else:
             font.setPointSize(cls.font_size)
         return font
+
 
     @classmethod
     def load_svg(cls, filename: str) -> str:
