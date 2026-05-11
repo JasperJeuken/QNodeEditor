@@ -15,7 +15,7 @@ sys.path.insert(0, os.path.abspath('..'))
 project = 'QNodeEditor'
 copyright = '2023, Jasper Jeuken'
 author = 'Jasper Jeuken'
-release = '1.0.6'
+release = '1.0.7'
 today_fmt = '%-d %B %Y at %H:%M'
 
 
