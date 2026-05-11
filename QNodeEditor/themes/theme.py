@@ -5,10 +5,9 @@ New themes can be created by deriving from this class and giving each property a
 :py:class:`~QNodeEditor.themes`).
 """
 # pylint: disable = no-name-in-module, R0801
-import os
 from typing import Type, Optional
 from pkgutil import get_data
-from pkg_resources import resource_filename
+from importlib import resources
 
 from PyQt5.QtCore import QByteArray, Qt
 from PyQt5.QtGui import QColor, QFontDatabase, QFont
@@ -192,8 +191,8 @@ class Theme:
         str
             Absolute path to SVG file
         """
-        path = resource_filename(__name__, os.path.join('img', filename))
-        return path.replace('\\', '/')
+        path = resources.files(__name__) / 'img' / filename
+        return str(path).replace('\\', '/')
 
     @classmethod
     def load_combo_box_arrow(cls) -> str:
