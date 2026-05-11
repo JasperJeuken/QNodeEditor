@@ -34,6 +34,7 @@ extensions = [
     'sphinx_qt_documentation'
 ]
 autosummary_generate = True
+autodoc_use_legacy_class_based = True
 autodoc_default_options = {
     'inherited-members': False
 }
